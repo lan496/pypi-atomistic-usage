@@ -1,4 +1,4 @@
-"""Fetch daily PyPI download counts from pypistats.org and write data.js for dashboard.html.
+"""Fetch daily PyPI download counts from pypistats.org and write docs/data.js for docs/index.html.
 
 pypistats keeps 180 days of daily counts. Mirror downloads are excluded.
 """
@@ -32,7 +32,7 @@ PACKAGES = {
     "分子動力学": ["openmm", "MDAnalysis"],
 }
 API = "https://pypistats.org/api/packages/{name}/overall?mirrors=false"
-OUTPUT = Path(__file__).parent / "data.js"
+OUTPUT = Path(__file__).parent / "docs" / "data.js"
 REQUEST_INTERVAL_S = 2.0
 
 
