@@ -2,7 +2,7 @@
 
 How much are atomistic-simulation Python packages used, judged by the daily
 download counts on pypistats.org? `fetch_stats.py` starts from a curated list
-of 37 packages in five categories (`SEEDS`) and pulls each one's 180-day daily
+of 38 packages in five categories (`SEEDS`) and pulls each one's 180-day daily
 series by operating system (mirrors excluded) from pypistats into
 `docs/data.js`. `docs/index.html` reads it and shows a 7-day-mean line chart
 with each line named at its end, a bar chart race, and a ranked table with the

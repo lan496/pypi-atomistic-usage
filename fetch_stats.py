@@ -36,6 +36,7 @@ SEEDS = {
         "atomate2",
         "lobsterpy",
         "pymatviz",
+        "pyiron",
     ],
     "Machine-learning potentials": [
         "mace-torch",
