@@ -12,10 +12,10 @@ from pathlib import Path
 # Category order fixes each category's colour in the dashboard (8 at most);
 # append categories, do not reorder them.
 PACKAGES = {
-    "構造と対称性": ["pymatgen", "ase", "spglib", "moyopy", "seekpath"],
-    "フォノン": ["phonopy", "phono3py", "hiphive"],
-    "ワークフローと後処理": ["aiida-core", "atomate2", "lobsterpy"],
-    "機械学習ポテンシャル": [
+    "Structure and symmetry": ["pymatgen", "ase", "spglib", "moyopy", "seekpath"],
+    "Phonons": ["phonopy", "phono3py", "hiphive"],
+    "Workflows and post-processing": ["aiida-core", "atomate2", "lobsterpy"],
+    "Machine-learning potentials": [
         "mace-torch",
         "chgnet",
         "mattersim",
@@ -29,7 +29,7 @@ PACKAGES = {
         "torch-sim-atomistic",
         "nvalchemi-toolkit-ops",
     ],
-    "分子動力学": ["openmm", "MDAnalysis"],
+    "Molecular dynamics": ["openmm", "MDAnalysis"],
 }
 API = "https://pypistats.org/api/packages/{name}/overall?mirrors=false"
 OUTPUT = Path(__file__).parent / "docs" / "data.js"

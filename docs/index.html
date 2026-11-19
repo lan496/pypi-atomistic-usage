@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>原子シミュレーション関連 Python パッケージの PyPI ダウンロード数</title>
+<title>PyPI downloads of atomistic-simulation Python packages</title>
 <style>
 :root {
   color-scheme: light;
@@ -123,54 +123,54 @@ footer p { margin: 0 0 4px; }
 </head>
 <body>
 <main>
-  <h1>原子シミュレーション関連 Python パッケージの PyPI ダウンロード数</h1>
+  <h1>PyPI downloads of atomistic-simulation Python packages</h1>
   <p class="sub" id="sub"></p>
 
   <div class="filters">
-    <div class="group">期間
+    <div class="group">Period
       <div class="seg" id="days">
-        <button type="button" data-v="30">30日</button>
-        <button type="button" data-v="90">90日</button>
-        <button type="button" data-v="180">180日</button>
+        <button type="button" data-v="30">30 days</button>
+        <button type="button" data-v="90">90 days</button>
+        <button type="button" data-v="180">180 days</button>
       </div>
     </div>
-    <label>カテゴリ <select id="cat"></select></label>
-    <div class="group">縦軸
+    <label>Category <select id="cat"></select></label>
+    <div class="group">Y axis
       <div class="seg" id="scale">
-        <button type="button" data-v="log">対数</button>
-        <button type="button" data-v="linear">線形</button>
+        <button type="button" data-v="log">Log</button>
+        <button type="button" data-v="linear">Linear</button>
       </div>
     </div>
   </div>
 
   <section class="card">
     <div class="card-head">
-      <h2>1日あたりのダウンロード数 (7日移動平均)</h2>
+      <h2>Downloads per day (7-day rolling mean)</h2>
       <div class="legend" id="legend"></div>
     </div>
     <div class="chart-wrap">
       <svg id="chart" height="420" tabindex="0" role="img"
-           aria-label="パッケージごとの1日あたりダウンロード数の推移。左右の矢印キーで日付、上下の矢印キーでパッケージを選べます。同じ値は下の表にあります。"></svg>
+           aria-label="Downloads per day for each package over time. Left and right arrow keys move the date, up and down arrow keys select a package. The table below carries the same totals."></svg>
       <div id="tooltip"></div>
     </div>
   </section>
 
   <section class="card">
     <div class="card-head">
-      <h2>期間内のダウンロード数</h2>
-      <p class="note">行にカーソルを置くと、上のグラフでそのパッケージを強調します。</p>
+      <h2>Downloads in the period</h2>
+      <p class="note">Hover a row to highlight that package in the chart above.</p>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>パッケージ</th>
-            <th>カテゴリ</th>
-            <th class="num">期間合計</th>
+            <th>Package</th>
+            <th>Category</th>
+            <th class="num">Total</th>
             <th></th>
-            <th class="num">1日平均</th>
-            <th class="num">直前の同じ日数との比</th>
-            <th>推移 (行ごとの尺度)</th>
+            <th class="num">Per day</th>
+            <th class="num">vs. preceding period</th>
+            <th>Trend (own scale per row)</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -179,9 +179,9 @@ footer p { margin: 0 0 4px; }
   </section>
 
   <footer>
-    <p>出典は pypistats.org の overall 系列で、ミラーによるダウンロードを除いた日次の値です。保持期間は180日です。</p>
-    <p>CI や自動インストールも数に入るため、値は利用者数ではなくインストール回数の目安です。数日だけの急増は、多くの場合その種の自動取得です。</p>
-    <p>conda-forge など PyPI 以外からのインストールは含みません。</p>
+    <p>Source: the daily "overall" series of pypistats.org, mirror downloads excluded. pypistats keeps 180 days.</p>
+    <p>The counts include CI and other automated installs, so they measure installs rather than users. A burst lasting a few days is usually such automated traffic.</p>
+    <p>Installs from outside PyPI, such as conda-forge, are not counted.</p>
   </footer>
 </main>
 
@@ -191,6 +191,7 @@ const D = window.PYPI_DATA;
 const N = D.dates.length;
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ROLL = 7;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const M = { left: 52, right: 16, top: 16, bottom: 28 };
 
 const PK = D.packages.map((p) => ({
@@ -210,10 +211,10 @@ init();
 
 function init() {
   document.getElementById("sub").textContent =
-    `${D.dates[0]} から ${D.dates[N - 1]} まで、${PK.length} パッケージ。取得日 ${D.fetched}。`;
+    `${D.dates[0]} to ${D.dates[N - 1]}, ${PK.length} packages. Fetched ${D.fetched}.`;
 
   const cat = document.getElementById("cat");
-  cat.append(new Option("すべて", ""));
+  cat.append(new Option("All", ""));
   for (const c of D.categories) cat.append(new Option(c, c));
   cat.addEventListener("change", () => { state.cat = cat.value; state.hl = null; renderAll(); });
 
@@ -329,7 +330,7 @@ function renderTooltip(pk, cx) {
     list.append(el("div", { class: p.name === state.hl ? "row hl" : "row" },
       key, el("b", {}, full(p.roll[i])), p.name));
   }
-  tooltip.replaceChildren(el("div", { class: "date" }, `${D.dates[i]} までの7日平均`), list);
+  tooltip.replaceChildren(el("div", { class: "date" }, `7-day mean ending ${D.dates[i]}`), list);
   tooltip.style.display = "block";
   const onLeft = cx > geom.W / 2;
   tooltip.style.left = onLeft ? "" : `${cx + 14}px`;
@@ -470,7 +471,7 @@ function xTicks(start) {
   } else {
     for (let i = start; i < N; i++) {
       const [, m, d] = D.dates[i].split("-");
-      if (d === "01") ticks.push([i, `${Number(m)}月`]);
+      if (d === "01") ticks.push([i, MONTHS[Number(m) - 1]]);
     }
   }
   return ticks;
