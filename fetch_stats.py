@@ -78,7 +78,7 @@ GITHUB_OWNERS = {
 N_PACKAGES = 100
 # The walk found 1357, 189, 51 and 2 new dependents per level on 2026-11-19. A
 # level far beyond that means a general-purpose seed, whose dependents would
-# not fit one query or the endpoint's hourly quota.
+# not fit one query. The query returns at most one row more than this.
 MAX_FRONTIER = 5000
 RANKING_DAYS = 180
 PYPISTATS = "https://pypistats.org/api/packages/{key}/system"
@@ -175,8 +175,14 @@ def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
     depth = 0
     while frontier:
         depth += 1
+        rows = clickpy(dependents_sql(frontier))
+        if len(rows) > MAX_FRONTIER:
+            raise RuntimeError(
+                f"more than {MAX_FRONTIER} dependents at depth {depth}: a seed is "
+                "too general for the walk; remove it from SEEDS"
+            )
         level = {}
-        for row in clickpy(dependents_sql(frontier)):
+        for row in rows:
             key = row["key"]
             if key in known:
                 continue
@@ -187,11 +193,6 @@ def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
                 "via": parent["name"],
             }
         print(f"depth {depth}: {len(level)} new dependents")
-        if len(level) > MAX_FRONTIER:
-            raise RuntimeError(
-                f"{len(level)} dependents at depth {depth}: a seed is too general "
-                "for the walk; remove it from SEEDS"
-            )
         known.update(level)
         found.update(level)
         frontier = sorted(level)
@@ -232,6 +233,7 @@ def dependents_sql(frontier: list[str]) -> str:
             GROUP BY name
         )
         WHERE length(parents) > 0
+        LIMIT {MAX_FRONTIER + 1}
     """
 
 
