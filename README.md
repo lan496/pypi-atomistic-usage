@@ -16,7 +16,8 @@ copy of the PyPI metadata; that endpoint has an hourly read quota, so a refused
 run succeeds after the hour turns. The page is deployed to GitHub Pages by
 `.github/workflows/pages.yml` on every push that touches `docs/`, and also
 opens straight from disk. The committed snapshot of 2026-11-19 (2026-05-22 to
-2026-11-18) holds the curated list only; its 180-day totals are led by ase
+2026-11-18) holds 100 packages: the curated list and 62 of its 1589
+dependents. Within the curated list, its 180-day totals are led by ase
 (11.8M), spglib (10.8M), seekpath (6.1M), pyxtal (5.8M), moyopy (5.2M) and
 pymatgen (5.0M), and the largest machine-learning-potential packages are
 nvalchemi-toolkit-ops (1.7M), nequix (0.98M) and mace-torch (0.65M). On macOS
