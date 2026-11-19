@@ -89,7 +89,8 @@ select {
 .chart-wrap { position: relative; }
 #chart { display: block; width: 100%; outline-offset: 2px; }
 #chart text { font-size: 11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
-#chart text.hl-label { font-size: 12px; fill: var(--text-primary); font-weight: 600; }
+#chart text.end-label { fill: var(--text-secondary); }
+#chart text.end-label.hl { fill: var(--text-primary); font-weight: 600; }
 #tooltip {
   position: absolute; top: 8px; pointer-events: none; display: none;
   background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
@@ -111,7 +112,10 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.cat { color: var(--text-secondary); }
 td.bar { width: 28%; min-width: 120px; }
 .bar-fill { height: 12px; min-width: 2px; border-radius: 0 4px 4px 0; }
-.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; }
+.icon { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
+span.icon { background: var(--wash); color: var(--text-muted); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
+#tooltip .icon { width: 14px; height: 14px; margin-right: 0; vertical-align: 0; border-radius: 3px; font-size: 9px; line-height: 14px; flex: none; }
+#tooltip .more { color: var(--text-muted); margin-top: 4px; }
 td a { color: inherit; text-decoration: none; }
 td a:hover { text-decoration: underline; }
 .up { color: var(--up); }
@@ -134,7 +138,20 @@ footer p { margin: 0 0 4px; }
         <button type="button" data-v="180">180 days</button>
       </div>
     </div>
+    <div class="group">Packages
+      <div class="seg" id="set">
+        <button type="button" data-v="curated">Curated</button>
+        <button type="button" data-v="all">With dependents</button>
+      </div>
+    </div>
     <label>Category <select id="cat"></select></label>
+    <div class="group">Lines
+      <div class="seg" id="lines">
+        <button type="button" data-v="10">Top 10</button>
+        <button type="button" data-v="25">Top 25</button>
+        <button type="button" data-v="0">All</button>
+      </div>
+    </div>
     <div class="group">Y axis
       <div class="seg" id="scale">
         <button type="button" data-v="log">Log</button>
@@ -158,7 +175,7 @@ footer p { margin: 0 0 4px; }
   <section class="card">
     <div class="card-head">
       <h2>Downloads in the period</h2>
-      <p class="note">Hover a row to highlight that package in the chart above.</p>
+      <p class="note">Hover a row to highlight that package in the chart above. The chart names its 25 largest lines at their right ends.</p>
     </div>
     <div class="table-wrap">
       <table>
@@ -166,6 +183,7 @@ footer p { margin: 0 0 4px; }
           <tr>
             <th>Package</th>
             <th>Category</th>
+            <th>Found via</th>
             <th class="num">Total</th>
             <th></th>
             <th class="num">Per day</th>
@@ -180,8 +198,8 @@ footer p { margin: 0 0 4px; }
 
   <footer>
     <p>Source: the daily "overall" series of pypistats.org, mirror downloads excluded. pypistats keeps 180 days.</p>
-    <p>The counts include CI and other automated installs, so they measure installs rather than users. A burst lasting a few days is usually such automated traffic.</p>
-    <p>Installs from outside PyPI, such as conda-forge, are not counted.</p>
+    <p>The counts include CI and other automated installs, so they measure installs rather than users. A burst lasting a few days is usually such automated traffic. Installs from outside PyPI, such as conda-forge, are not counted.</p>
+    <p>"Curated" is a hand-picked list. "With dependents" adds the most-downloaded packages whose latest release requires a listed package, directly or through other dependents, according to the PyPI metadata in ClickPy (clickpy.clickhouse.com); a dependency declared only in an optional extra does not count. A dependent takes the category of the package it was found through. Icons are the GitHub organization or user that hosts the repository.</p>
   </footer>
 </main>
 
@@ -189,23 +207,29 @@ footer p { margin: 0 0 4px; }
 <script>
 const D = window.PYPI_DATA;
 const N = D.dates.length;
-const SVG_NS = "http://www.w3.org/2000/svg";
 const ROLL = 7;
+const SVG_NS = "http://www.w3.org/2000/svg";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const M = { left: 52, right: 16, top: 16, bottom: 28 };
+const M = { left: 52, right: 190, top: 16, bottom: 28 };
+const MAX_LABELS = 25;
+const LABEL_GAP = 14;
+const TOOLTIP_ROWS = 20;
 
 const PK = D.packages.map((p) => ({
   name: p.name,
   category: p.category,
+  via: p.via,
+  owner: p.owner,
   downloads: p.downloads,
   color: `var(--c${D.categories.indexOf(p.category) + 1})`,
-  roll: rolling(p.downloads, ROLL),
+  perDay: rolling(p.downloads),
 }));
 
-const state = { days: 90, scale: "log", cat: "", hl: null, cursor: null };
+const state = { days: 90, set: "all", cat: "", lines: 25, scale: "log", hl: null, cursor: null };
 const chart = document.getElementById("chart");
 const tooltip = document.getElementById("tooltip");
-let geom = null;
+// what the current chart shows: packages, their paths, and the scales
+let view = null;
 
 init();
 
@@ -216,10 +240,12 @@ function init() {
   const cat = document.getElementById("cat");
   cat.append(new Option("All", ""));
   for (const c of D.categories) cat.append(new Option(c, c));
-  cat.addEventListener("change", () => { state.cat = cat.value; state.hl = null; renderAll(); });
+  cat.addEventListener("change", () => { state.cat = cat.value; renderAll(); });
 
-  bindSeg("days", (v) => { state.days = Number(v); state.cursor = null; });
-  bindSeg("scale", (v) => { state.scale = v; });
+  bindSeg("days", Number);
+  bindSeg("set", String);
+  bindSeg("lines", Number);
+  bindSeg("scale", String);
 
   const legend = document.getElementById("legend");
   D.categories.forEach((c, i) => {
@@ -231,26 +257,34 @@ function init() {
   });
 
   chart.addEventListener("pointermove", onPointer);
-  chart.addEventListener("pointerleave", () => { state.cursor = null; state.hl = null; renderChart(); });
+  chart.addEventListener("pointerleave", clearHover);
   chart.addEventListener("keydown", onKey);
-  chart.addEventListener("blur", () => { state.cursor = null; state.hl = null; renderChart(); });
+  chart.addEventListener("blur", clearHover);
   window.addEventListener("resize", renderChart);
   renderAll();
 }
 
 function renderAll() {
+  state.hl = null;
+  state.cursor = null;
   renderChart();
   renderTable();
 }
 
+// packages passing the filters, largest period total first
 function visible() {
-  return PK.filter((p) => !state.cat || p.category === state.cat);
+  const start = N - state.days;
+  return PK
+    .filter((p) => (state.set === "all" || p.via === null) && (!state.cat || p.category === state.cat))
+    .map((p) => ({ p, total: sum(p.downloads, start, N) }))
+    .sort((a, b) => b.total - a.total);
 }
 
 // ---- line chart ----
 
 function renderChart() {
-  const pk = visible();
+  const ranked = visible().map((r) => r.p);
+  const pk = state.lines ? ranked.slice(0, state.lines) : ranked;
   const W = chart.clientWidth;
   const H = Number(chart.getAttribute("height"));
   const start = N - state.days;
@@ -259,11 +293,10 @@ function renderChart() {
   chart.setAttribute("viewBox", `0 0 ${W} ${H}`);
   chart.replaceChildren();
 
-  const vals = pk.flatMap((p) => p.roll.slice(start).filter((v) => v !== null));
+  const vals = pk.flatMap((p) => p.perDay.slice(start).filter((v) => v !== null));
   const axis = state.scale === "log" ? logAxis(vals) : linearAxis(vals);
   const x = (i) => M.left + ((i - start) / (state.days - 1)) * pw;
   const y = (v) => M.top + ph - axis.t(v) * ph;
-  geom = { start, x, y, pw, W };
 
   for (const tick of axis.ticks) {
     const ty = y(tick);
@@ -275,141 +308,192 @@ function renderChart() {
     chart.append(svg("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, label));
   }
 
-  // the highlighted line is drawn last so it sits on top
-  const ordered = pk.filter((p) => p.name !== state.hl).concat(pk.filter((p) => p.name === state.hl));
-  for (const p of ordered) {
-    const isHl = p.name === state.hl;
-    chart.append(svg("path", {
-      d: linePath(p.roll, start, x, y),
+  const paths = new Map();
+  for (const p of pk) {
+    const path = svg("path", {
+      d: linePath(p.perDay, start, x, y),
       fill: "none",
       stroke: p.color,
-      "stroke-width": isHl ? 3 : 2,
+      "stroke-width": 2,
       "stroke-linejoin": "round",
       "stroke-linecap": "round",
-      opacity: state.hl && !isHl ? 0.18 : 1,
-    }));
+    });
+    paths.set(p.name, path);
+    chart.append(path);
   }
+  const labels = endLabels(pk.slice(0, MAX_LABELS), y, ph);
+  for (const label of labels) {
+    chart.append(svg("line", {
+      x1: W - M.right, y1: y(label.p.perDay[N - 1]), x2: W - M.right + 10, y2: label.y,
+      stroke: label.p.color, opacity: 0.6,
+    }));
+    label.text = svg("text", { x: W - M.right + 14, y: label.y + 4, class: "end-label" }, label.p.name);
+    chart.append(label.text);
+  }
+  const hover = svg("g");
+  chart.append(hover);
+  view = { pk, paths, labels, hover, start, x, y, pw, ph, W };
+  renderHover();
+}
 
+// Restyles the lines and redraws only the hover layer; the paths are not rebuilt.
+function renderHover() {
+  const { pk, paths, labels, hover, x, y, ph } = view;
+  for (const [name, path] of paths) {
+    const isHl = name === state.hl;
+    path.setAttribute("stroke-width", isHl ? 3 : 2);
+    path.setAttribute("opacity", state.hl && !isHl ? 0.18 : 1);
+  }
+  for (const label of labels) {
+    const isHl = label.p.name === state.hl;
+    label.text.setAttribute("class", isHl ? "end-label hl" : "end-label");
+    label.text.setAttribute("opacity", state.hl && !isHl ? 0.35 : 1);
+  }
+  hover.replaceChildren();
   const hl = pk.find((p) => p.name === state.hl);
   if (hl) {
-    const last = hl.roll[N - 1];
-    const ly = Math.max(M.top + 12, y(last) - 10);
-    chart.append(svg("text", {
-      x: W - M.right - 4, y: ly, "text-anchor": "end", class: "hl-label",
-      stroke: "var(--surface)", "stroke-width": 4, "paint-order": "stroke",
-    }, hl.name));
+    // the highlighted line goes on top of the others, under the hover layer
+    chart.insertBefore(paths.get(hl.name), hover);
   }
-
   if (state.cursor === null) {
     tooltip.style.display = "none";
     return;
   }
   const cx = x(state.cursor);
-  chart.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)" }));
-  for (const p of ordered) {
-    const v = p.roll[state.cursor];
-    if (v === null) continue;
-    const isHl = p.name === state.hl;
-    chart.append(svg("circle", {
-      cx, cy: y(v), r: isHl ? 5 : 3, fill: p.color,
-      stroke: "var(--surface)", "stroke-width": isHl ? 2 : 1,
-      opacity: state.hl && !isHl ? 0.4 : 1,
+  hover.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)" }));
+  if (hl && hl.perDay[state.cursor] !== null) {
+    hover.append(svg("circle", {
+      cx, cy: y(hl.perDay[state.cursor]), r: 5, fill: hl.color,
+      stroke: "var(--surface)", "stroke-width": 2,
     }));
   }
-  renderTooltip(pk, cx);
+  renderTooltip(cx);
 }
 
-function renderTooltip(pk, cx) {
+// Label positions at the line ends, pushed apart so that names do not overlap.
+function endLabels(pk, y, ph) {
+  const labels = pk.map((p) => ({ p, y: y(p.perDay[N - 1]) })).sort((a, b) => a.y - b.y);
+  for (let k = 1; k < labels.length; k++) {
+    labels[k].y = Math.max(labels[k].y, labels[k - 1].y + LABEL_GAP);
+  }
+  const bottom = M.top + ph;
+  for (let k = labels.length - 1; k >= 0; k--) {
+    const limit = k === labels.length - 1 ? bottom : labels[k + 1].y - LABEL_GAP;
+    labels[k].y = Math.min(labels[k].y, limit);
+  }
+  return labels;
+}
+
+function renderTooltip(cx) {
   const i = state.cursor;
-  const rows = pk.filter((p) => p.roll[i] !== null).sort((a, b) => b.roll[i] - a.roll[i]);
+  const ranked = view.pk.filter((p) => p.perDay[i] !== null).sort((a, b) => b.perDay[i] - a.perDay[i]);
+  const rows = ranked.slice(0, TOOLTIP_ROWS);
+  const hl = ranked.find((p) => p.name === state.hl);
+  if (hl && !rows.includes(hl)) rows.push(hl);
   const list = el("div", { class: "rows" });
   list.style.setProperty("--rows", Math.ceil(rows.length / (rows.length > 10 ? 2 : 1)));
   for (const p of rows) {
     const key = el("i", { class: "key" });
     key.style.background = p.color;
     list.append(el("div", { class: p.name === state.hl ? "row hl" : "row" },
-      key, el("b", {}, full(p.roll[i])), p.name));
+      key, el("b", {}, full(p.perDay[i])), icon(p), p.name));
   }
   tooltip.replaceChildren(el("div", { class: "date" }, `7-day mean ending ${D.dates[i]}`), list);
+  if (ranked.length > rows.length) {
+    tooltip.append(el("div", { class: "more" }, `and ${ranked.length - rows.length} smaller ones, listed in the table`));
+  }
   tooltip.style.display = "block";
-  const onLeft = cx > geom.W / 2;
+  const onLeft = cx > M.left + view.pw / 2;
   tooltip.style.left = onLeft ? "" : `${cx + 14}px`;
-  tooltip.style.right = onLeft ? `${geom.W - cx + 14}px` : "";
+  tooltip.style.right = onLeft ? `${view.W - cx + 14}px` : "";
 }
 
 function onPointer(ev) {
   const box = chart.getBoundingClientRect();
   const px = ev.clientX - box.left;
   const py = ev.clientY - box.top;
-  const rel = (px - M.left) / geom.pw;
-  const i = geom.start + Math.round(Math.min(1, Math.max(0, rel)) * (state.days - 1));
+  const rel = (px - M.left) / view.pw;
+  const i = view.start + Math.round(Math.min(1, Math.max(0, rel)) * (state.days - 1));
   let best = null;
   let bestDist = Infinity;
-  for (const p of visible()) {
-    if (p.roll[i] === null) continue;
-    const dist = Math.abs(geom.y(p.roll[i]) - py);
-    if (dist < bestDist) { best = p.name; bestDist = dist; }
+  if (px > M.left + view.pw + 8) {
+    // over the end labels: the nearest label picks the line
+    for (const label of view.labels) {
+      const dist = Math.abs(label.y - py);
+      if (dist < bestDist) { best = label.p.name; bestDist = dist; }
+    }
+  } else {
+    for (const p of view.pk) {
+      if (p.perDay[i] === null) continue;
+      const dist = Math.abs(view.y(p.perDay[i]) - py);
+      if (dist < bestDist) { best = p.name; bestDist = dist; }
+    }
   }
   if (i === state.cursor && best === state.hl) return;
   state.cursor = i;
   state.hl = best;
-  renderChart();
+  renderHover();
 }
 
 function onKey(ev) {
-  const start = N - state.days;
-  const first = Math.max(start, ROLL - 1);
   if (state.cursor === null) state.cursor = N - 1;
-  const ranked = visible()
-    .filter((p) => p.roll[state.cursor] !== null)
-    .sort((a, b) => b.roll[state.cursor] - a.roll[state.cursor])
+  const ranked = view.pk
+    .filter((p) => p.perDay[state.cursor] !== null)
+    .sort((a, b) => b.perDay[state.cursor] - a.perDay[state.cursor])
     .map((p) => p.name);
   const at = ranked.indexOf(state.hl);
-  if (ev.key === "ArrowLeft") state.cursor = Math.max(first, state.cursor - 1);
+  if (ev.key === "ArrowLeft") state.cursor = Math.max(view.start, ROLL - 1, state.cursor - 1);
   else if (ev.key === "ArrowRight") state.cursor = Math.min(N - 1, state.cursor + 1);
   else if (ev.key === "ArrowDown") state.hl = ranked[Math.min(ranked.length - 1, at + 1)];
   else if (ev.key === "ArrowUp") state.hl = ranked[Math.max(0, at - 1)];
   else if (ev.key === "Escape") { state.cursor = null; state.hl = null; }
   else return;
   ev.preventDefault();
-  renderChart();
+  renderHover();
+}
+
+function clearHover() {
+  state.cursor = null;
+  state.hl = null;
+  renderHover();
 }
 
 // ---- table ----
 
 function renderTable() {
   const start = N - state.days;
-  const rows = visible().map((p) => {
-    const total = sum(p.downloads, start, N);
-    const prev = start - state.days >= 0 ? sum(p.downloads, start - state.days, start) : null;
-    return { p, total, change: prev ? total / prev - 1 : null };
-  }).sort((a, b) => b.total - a.total);
+  const rows = visible();
   const max = Math.max(...rows.map((r) => r.total), 1);
 
   const body = document.getElementById("rows");
   body.replaceChildren();
-  for (const { p, total, change } of rows) {
-    const swatch = el("i", { class: "swatch" });
-    swatch.style.background = p.color;
-    const link = el("a", { href: `https://pypistats.org/packages/${p.name.toLowerCase()}` }, p.name);
+  for (const { p, total } of rows) {
+    const prev = start - state.days >= 0 ? sum(p.downloads, start - state.days, start) : 0;
+    const link = el("a", { href: `https://pypi.org/project/${p.name}/` }, p.name);
     const fill = el("div", { class: "bar-fill" });
     fill.style.width = `${(total / max) * 100}%`;
     fill.style.background = p.color;
     const delta = el("td", { class: "num" }, "-");
-    if (change !== null) {
+    if (prev > 0) {
+      const change = total / prev - 1;
       delta.textContent = `${change >= 0 ? "+" : "-"}${Math.abs(change * 100).toFixed(1)}%`;
       delta.classList.add(change >= 0 ? "up" : "down");
     }
     const tr = el("tr", {},
-      el("td", {}, swatch, link),
+      el("td", {}, icon(p), link),
       el("td", { class: "cat" }, p.category),
+      el("td", { class: "cat" }, p.via ?? "curated"),
       el("td", { class: "num" }, full(total)),
       el("td", { class: "bar" }, fill),
       el("td", { class: "num" }, full(total / state.days)),
       delta,
-      el("td", {}, sparkline(p.roll.slice(start))));
-    tr.addEventListener("pointerenter", () => { state.hl = p.name; renderChart(); });
-    tr.addEventListener("pointerleave", () => { state.hl = null; renderChart(); });
+      el("td", {}, sparkline(p.perDay.slice(start))));
+    tr.addEventListener("pointerenter", () => {
+      if (!view.paths.has(p.name)) return;
+      state.hl = p.name;
+      renderHover();
+    });
+    tr.addEventListener("pointerleave", clearHover);
     body.append(tr);
   }
 }
@@ -417,8 +501,7 @@ function renderTable() {
 function sparkline(values) {
   const w = 120;
   const h = 24;
-  const known = values.filter((v) => v !== null);
-  const max = Math.max(...known, 1);
+  const max = Math.max(...values.filter((v) => v !== null), 1);
   const node = svg("svg", { width: w, height: h, class: "spark", "aria-hidden": "true" });
   const x = (i) => 1 + (i / (values.length - 1)) * (w - 2);
   const y = (v) => h - 2 - (v / max) * (h - 4);
@@ -429,10 +512,20 @@ function sparkline(values) {
   return node;
 }
 
+// GitHub avatar of the repository owner, or the package initial when there is none
+function icon(p) {
+  if (!p.owner) return el("span", { class: "icon", "aria-hidden": "true" }, p.name[0].toUpperCase());
+  return el("img", {
+    class: "icon", alt: "", title: p.owner, loading: "lazy",
+    src: `https://github.com/${encodeURIComponent(p.owner)}.png?size=40`,
+  });
+}
+
 // ---- helpers ----
 
-function rolling(values, window) {
-  return values.map((_, i) => (i < window - 1 ? null : sum(values, i - window + 1, i + 1) / window));
+// 7-day mean ending on each day; null until a full window exists
+function rolling(values) {
+  return values.map((_, i) => (i < ROLL - 1 ? null : sum(values, i - ROLL + 1, i + 1) / ROLL));
 }
 
 function sum(values, from, to) {
@@ -461,12 +554,13 @@ function linearAxis(vals) {
   return { ticks, t: (v) => v / top };
 }
 
+// every seventh day up to 30 days, month starts beyond
 function xTicks(start) {
   const ticks = [];
   if (state.days <= 30) {
     for (let i = N - 1; i >= start; i -= 7) {
       const [, m, d] = D.dates[i].split("-");
-      ticks.push([i, `${Number(m)}/${Number(d)}`]);
+      ticks.push([i, `${MONTHS[Number(m) - 1]} ${Number(d)}`]);
     }
   } else {
     for (let i = start; i < N; i++) {
@@ -500,10 +594,10 @@ function full(n) {
   return Math.round(n).toLocaleString("en-US");
 }
 
-function bindSeg(id, apply) {
+function bindSeg(id, parse) {
   const buttons = [...document.getElementById(id).querySelectorAll("button")];
-  const sync = () => buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === String(state[id]))));
-  buttons.forEach((b) => b.addEventListener("click", () => { apply(b.dataset.v); sync(); renderAll(); }));
+  const sync = () => buttons.forEach((b) => b.setAttribute("aria-pressed", String(parse(b.dataset.v) === state[id])));
+  buttons.forEach((b) => b.addEventListener("click", () => { state[id] = parse(b.dataset.v); sync(); renderAll(); }));
   sync();
 }
 

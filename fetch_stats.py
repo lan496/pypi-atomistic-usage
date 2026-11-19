@@ -1,20 +1,33 @@
-"""Fetch daily PyPI download counts from pypistats.org and write docs/data.js for docs/index.html.
+"""Collect daily PyPI download counts and write docs/data.js for docs/index.html.
 
-pypistats keeps 180 days of daily counts. Mirror downloads are excluded.
+Download counts come from pypistats.org, which keeps 180 days of daily counts;
+mirror downloads are excluded.
+
+The package set is the curated SEEDS plus the most-downloaded packages that
+depend on them. The dependents are found by walking declared dependencies
+recursively in ClickPy (https://clickpy.clickhouse.com), ClickHouse's public
+copy of the PyPI metadata and download logs.
 """
 
 import json
+import re
 import time
+import urllib.error
 import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
 # Category order fixes each category's colour in the dashboard (8 at most);
 # append categories, do not reorder them.
-PACKAGES = {
+SEEDS = {
     "Structure and symmetry": ["pymatgen", "ase", "spglib", "moyopy", "seekpath"],
     "Phonons": ["phonopy", "phono3py", "hiphive"],
-    "Workflows and post-processing": ["aiida-core", "atomate2", "lobsterpy"],
+    "Workflows and post-processing": [
+        "aiida-core",
+        "atomate2",
+        "lobsterpy",
+        "pymatviz",
+    ],
     "Machine-learning potentials": [
         "mace-torch",
         "chgnet",
@@ -28,58 +41,197 @@ PACKAGES = {
         "torch-dftd",
         "torch-sim-atomistic",
         "nvalchemi-toolkit-ops",
+        "matbench-discovery",
     ],
     "Molecular dynamics": ["openmm", "MDAnalysis"],
 }
-API = "https://pypistats.org/api/packages/{name}/overall?mirrors=false"
+# GitHub owners of packages whose PyPI metadata links no GitHub repository.
+# ase and hiphive are hosted on GitLab and get no avatar.
+GITHUB_OWNERS = {
+    "moyopy": "spglib",
+    "quippy-ase": "libAtoms",
+    "matgl": "materialsvirtuallab",
+    "torch-dftd": "pfnet-research",
+    "nvalchemi-toolkit-ops": "NVIDIA",
+    "openmm": "openmm",
+}
+N_PACKAGES = 100
+RANKING_DAYS = 180
+PYPISTATS = "https://pypistats.org/api/packages/{key}/overall?mirrors=false"
+PYPI = "https://pypi.org/pypi/{key}/json"
+CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo"
 OUTPUT = Path(__file__).parent / "docs" / "data.js"
 REQUEST_INTERVAL_S = 2.0
+ATTEMPTS = 4
 
 
 def main() -> None:
-    category_of = {
-        name: category for category, names in PACKAGES.items() for name in names
+    seeds = seed_packages()
+    dependents = find_dependents(seeds)
+    print(f"{len(dependents)} packages depend on the {len(seeds)} seeds")
+    ranked = rank_by_downloads(list(dependents))
+    kept = dict(seeds)
+    for key in ranked[: N_PACKAGES - len(seeds)]:
+        kept[key] = dependents[key]
+    write_data(kept)
+
+
+def seed_packages() -> dict[str, dict]:
+    return {
+        normalize(name): {"name": name, "category": category, "via": None}
+        for category, names in SEEDS.items()
+        for name in names
     }
+
+
+def write_data(packages: dict[str, dict]) -> None:
     daily = {}
-    for name in category_of:
-        daily[name] = fetch_daily(name)
-        print(f"{name}: {len(daily[name])} days, {sum(daily[name].values())} downloads")
+    owners = {}
+    for key, info in packages.items():
+        daily[key] = fetch_daily(key)
+        owners[key] = GITHUB_OWNERS.get(key) or fetch_github_owner(key)
+        print(f"{info['name']}: {sum(daily[key].values())} downloads, owner {owners[key]}")
         time.sleep(REQUEST_INTERVAL_S)
 
     first = min(min(counts) for counts in daily.values())
     last = max(max(counts) for counts in daily.values())
-    dates = [
-        (first + timedelta(days=i)).isoformat() for i in range((last - first).days + 1)
-    ]
+    dates = [first + timedelta(days=i) for i in range((last - first).days + 1)]
     payload = {
         "fetched": date.today().isoformat(),
-        "dates": dates,
-        "categories": list(PACKAGES),
+        "dates": [d.isoformat() for d in dates],
+        "categories": list(SEEDS),
         "packages": [
             {
-                "name": name,
-                "category": category_of[name],
+                "name": info["name"],
+                "category": info["category"],
+                "via": info["via"],
+                "owner": owners[key],
                 # pypistats omits days without downloads
-                "downloads": [
-                    daily[name].get(date.fromisoformat(d), 0) for d in dates
-                ],
+                "downloads": [daily[key].get(d, 0) for d in dates],
             }
-            for name in category_of
+            for key, info in packages.items()
         ],
     }
-    OUTPUT.write_text(
-        f"window.PYPI_DATA = {json.dumps(payload, ensure_ascii=False)};\n"
-    )
-    print(f"wrote {OUTPUT} ({dates[0]} to {dates[-1]})")
+    OUTPUT.write_text(f"window.PYPI_DATA = {json.dumps(payload)};\n")
+    print(f"wrote {OUTPUT}: {len(packages)} packages, {dates[0]} to {dates[-1]}")
 
 
-def fetch_daily(name: str) -> dict[date, int]:
-    request = urllib.request.Request(
-        API.format(name=name.lower()), headers={"User-Agent": "pypi-stats-dashboard"}
-    )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        rows = json.load(response)["data"]
+def fetch_daily(key: str) -> dict[date, int]:
+    rows = json.loads(http_get(PYPISTATS.format(key=key)))["data"]
     return {date.fromisoformat(row["date"]): row["downloads"] for row in rows}
+
+
+def fetch_github_owner(key: str) -> str | None:
+    """GitHub organisation or user that hosts the package's repository, if any."""
+    info = json.loads(http_get(PYPI.format(key=key)))["info"]
+    urls = list((info["project_urls"] or {}).values()) + [info["home_page"] or ""]
+    for url in urls:
+        match = re.search(r"github\.com/([A-Za-z0-9-]+)/[A-Za-z0-9_.-]+", url)
+        if match and match.group(1).lower() != "sponsors":
+            return match.group(1)
+    return None
+
+
+def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
+    """Walk dependents breadth-first; each inherits the category of its parent."""
+    known = dict(seeds)
+    found = {}
+    frontier = sorted(seeds)
+    depth = 0
+    while frontier:
+        depth += 1
+        level = {}
+        for row in clickpy(dependents_sql(frontier)):
+            key = row["key"]
+            if key in known:
+                continue
+            parent = known[min(row["parents"])]
+            level[key] = {
+                "name": row["name"],
+                "category": parent["category"],
+                "via": parent["name"],
+            }
+        print(f"depth {depth}: {len(level)} new dependents")
+        known.update(level)
+        found.update(level)
+        frontier = sorted(level)
+    return found
+
+
+def rank_by_downloads(keys: list[str]) -> list[str]:
+    rows = clickpy(
+        f"""
+        SELECT project FROM pypi.pypi_downloads_per_day
+        WHERE project IN {sql_tuple(keys)} AND date > today() - {RANKING_DAYS}
+        GROUP BY project ORDER BY sum(count) DESC LIMIT {N_PACKAGES}
+        """
+    )
+    return [row["project"] for row in rows]
+
+
+def dependents_sql(frontier: list[str]) -> str:
+    """Packages whose latest release requires a frontier package outside any extra."""
+    dep_name = norm_sql("extract(d, '^[A-Za-z0-9._-]+')")
+    return f"""
+        SELECT {norm_sql("name")} AS key, name,
+               arrayFilter(d -> d IN {sql_tuple(frontier)}, deps) AS parents
+        FROM (
+            SELECT name,
+                   arrayDistinct(arrayMap(d -> {dep_name}, arrayFilter(
+                       d -> NOT match(d, 'extra\\\\s*=='),
+                       arrayFlatten(groupArray(requires_dist))))) AS deps
+            FROM pypi.projects
+            WHERE (name, version) IN (
+                SELECT name, argMax(version, upload_time) FROM pypi.projects
+                WHERE name IN (
+                    SELECT DISTINCT name FROM pypi.projects
+                    WHERE arrayExists(d -> {dep_name} IN {sql_tuple(frontier)}, requires_dist)
+                )
+                GROUP BY name
+            )
+            GROUP BY name
+        )
+        WHERE length(parents) > 0
+    """
+
+
+def clickpy(sql: str) -> list[dict]:
+    body = http_get(CLICKPY, data=f"{sql} FORMAT JSONEachRow".encode())
+    return [json.loads(line) for line in body.splitlines() if line]
+
+
+def http_get(url: str, data: bytes | None = None) -> bytes:
+    request = urllib.request.Request(
+        url, data=data, headers={"User-Agent": "pypi-stats-dashboard"}
+    )
+    # Both pypistats and the shared ClickPy endpoint refuse requests now and then.
+    for attempt in range(ATTEMPTS):
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                return response.read()
+        except urllib.error.HTTPError as error:
+            detail = error.read()[:300].decode(errors="replace")
+            print(f"{url} failed ({error.code}): {detail}")
+            if error.code == 404 or attempt == ATTEMPTS - 1:
+                raise
+            time.sleep(10 * 2**attempt)
+    raise AssertionError("unreachable")
+
+
+def normalize(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def norm_sql(expr: str) -> str:
+    return f"lower(replaceRegexpAll({expr}, '[-_.]+', '-'))"
+
+
+def sql_tuple(values: list[str]) -> str:
+    """A literal set for IN, which ClickHouse hashes."""
+    for value in values:
+        if "'" in value or "\\" in value:
+            raise ValueError(f"unsafe SQL literal: {value!r}")
+    return "(" + ", ".join(f"'{v}'" for v in values) + ")"
 
 
 if __name__ == "__main__":
