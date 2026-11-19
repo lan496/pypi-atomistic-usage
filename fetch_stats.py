@@ -1,12 +1,14 @@
 """Collect daily PyPI download counts and write docs/data.js for docs/index.html.
 
-Download counts come from pypistats.org, which keeps 180 days of daily counts;
-mirror downloads are excluded.
+Download counts come from pypistats.org, which keeps 180 days of daily counts
+without mirror downloads. Its per-operating-system series is used, so that
+Linux (where CI and other automated installs run) can be told from macOS and
+Windows.
 
 The package set is the curated SEEDS plus the most-downloaded packages that
 depend on them. The dependents are found by walking declared dependencies
 recursively in ClickPy (https://clickpy.clickhouse.com), ClickHouse's public
-copy of the PyPI metadata and download logs.
+copy of the PyPI metadata.
 """
 
 import json
@@ -20,7 +22,14 @@ from pathlib import Path
 # Category order fixes each category's colour in the dashboard (8 at most);
 # append categories, do not reorder them.
 SEEDS = {
-    "Structure and symmetry": ["pymatgen", "ase", "spglib", "moyopy", "seekpath"],
+    "Structure and symmetry": [
+        "pymatgen",
+        "ase",
+        "spglib",
+        "moyopy",
+        "seekpath",
+        "pyxtal",
+    ],
     "Phonons": ["phonopy", "phono3py", "hiphive"],
     "Workflows and post-processing": [
         "aiida-core",
@@ -42,6 +51,16 @@ SEEDS = {
         "torch-sim-atomistic",
         "nvalchemi-toolkit-ops",
         "matbench-discovery",
+        # further potentials on the Matbench Discovery leaderboard
+        "fairchem-core",
+        "orb-models",
+        "alignn",
+        "tensorpotential",
+        "nequip-allegro",
+        "nequix",
+        "matris",
+        "tace",
+        "eqnorm",
     ],
     "Molecular dynamics": ["openmm", "MDAnalysis"],
 }
@@ -57,7 +76,7 @@ GITHUB_OWNERS = {
 }
 N_PACKAGES = 100
 RANKING_DAYS = 180
-PYPISTATS = "https://pypistats.org/api/packages/{key}/overall?mirrors=false"
+PYPISTATS = "https://pypistats.org/api/packages/{key}/system"
 PYPI = "https://pypi.org/pypi/{key}/json"
 CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo"
 OUTPUT = Path(__file__).parent / "docs" / "data.js"
@@ -90,11 +109,12 @@ def write_data(packages: dict[str, dict]) -> None:
     for key, info in packages.items():
         daily[key] = fetch_daily(key)
         owners[key] = GITHUB_OWNERS.get(key) or fetch_github_owner(key)
-        print(f"{info['name']}: {sum(daily[key].values())} downloads, owner {owners[key]}")
+        total = sum(sum(day.values()) for day in daily[key].values())
+        print(f"{info['name']}: {total} downloads, owner {owners[key]}")
         time.sleep(REQUEST_INTERVAL_S)
 
-    first = min(min(counts) for counts in daily.values())
-    last = max(max(counts) for counts in daily.values())
+    first = min(min(days) for days in daily.values())
+    last = max(max(days) for days in daily.values())
     dates = [first + timedelta(days=i) for i in range((last - first).days + 1)]
     payload = {
         "fetched": date.today().isoformat(),
@@ -107,7 +127,13 @@ def write_data(packages: dict[str, dict]) -> None:
                 "via": info["via"],
                 "owner": owners[key],
                 # pypistats omits days without downloads
-                "downloads": [daily[key].get(d, 0) for d in dates],
+                "all": [sum(daily[key].get(d, {}).values()) for d in dates],
+                "linux": [daily[key].get(d, {}).get("Linux", 0) for d in dates],
+                "desktop": [
+                    daily[key].get(d, {}).get("Darwin", 0)
+                    + daily[key].get(d, {}).get("Windows", 0)
+                    for d in dates
+                ],
             }
             for key, info in packages.items()
         ],
@@ -116,9 +142,13 @@ def write_data(packages: dict[str, dict]) -> None:
     print(f"wrote {OUTPUT}: {len(packages)} packages, {dates[0]} to {dates[-1]}")
 
 
-def fetch_daily(key: str) -> dict[date, int]:
-    rows = json.loads(http_get(PYPISTATS.format(key=key)))["data"]
-    return {date.fromisoformat(row["date"]): row["downloads"] for row in rows}
+def fetch_daily(key: str) -> dict[date, dict[str, int]]:
+    """Downloads per day by operating system (Linux, Darwin, Windows, other, null)."""
+    daily = {}
+    for row in json.loads(http_get(PYPISTATS.format(key=key)))["data"]:
+        day = daily.setdefault(date.fromisoformat(row["date"]), {})
+        day[row["category"]] = row["downloads"]
+    return daily
 
 
 def fetch_github_owner(key: str) -> str | None:
