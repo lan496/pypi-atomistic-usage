@@ -76,6 +76,10 @@ GITHUB_OWNERS = {
     "openmm": "openmm",
 }
 N_PACKAGES = 100
+# The walk found 1357, 189, 51 and 2 new dependents per level on 2026-11-19. A
+# level far beyond that means a general-purpose seed, whose dependents would
+# not fit one query or the endpoint's hourly quota.
+MAX_FRONTIER = 5000
 RANKING_DAYS = 180
 PYPISTATS = "https://pypistats.org/api/packages/{key}/system"
 PYPI = "https://pypi.org/pypi/{key}/json"
@@ -183,6 +187,11 @@ def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
                 "via": parent["name"],
             }
         print(f"depth {depth}: {len(level)} new dependents")
+        if len(level) > MAX_FRONTIER:
+            raise RuntimeError(
+                f"{len(level)} dependents at depth {depth}: a seed is too general "
+                "for the walk; remove it from SEEDS"
+            )
         known.update(level)
         found.update(level)
         frontier = sorted(level)
