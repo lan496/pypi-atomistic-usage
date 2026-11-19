@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>原子シミュレーション関連 Python パッケージの PyPI ダウンロード数</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --wash: rgba(11, 11, 11, 0.05);
+  --up: #006300;
+  --down: #d03b3b;
+  --c1: #2a78d6;
+  --c2: #eb6834;
+  --c3: #1baf7a;
+  --c4: #eda100;
+  --c5: #e87ba4;
+  --c6: #008300;
+  --c7: #6250d6;
+  --c8: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --wash: rgba(255, 255, 255, 0.06);
+    --up: #0ca30c;
+    --down: #e66767;
+    --c1: #3987e5;
+    --c2: #d95926;
+    --c3: #199e70;
+    --c4: #c98500;
+    --c5: #d55181;
+    --c6: #0ca30c;
+    --c7: #9085e9;
+    --c8: #e66767;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px;
+  background: var(--page);
+  color: var(--text-primary);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+main { max-width: 1120px; margin: 0 auto; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+h2 { font-size: 15px; margin: 0; }
+.sub { color: var(--text-secondary); margin: 0 0 16px; }
+.filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 16px; }
+.filters label, .filters .group { display: flex; gap: 8px; align-items: center; color: var(--text-secondary); }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.seg button {
+  font: inherit; color: var(--text-secondary); background: var(--surface);
+  border: 0; padding: 4px 12px; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover { background: var(--wash); }
+.seg button[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; background: var(--wash); }
+select {
+  font: inherit; color: var(--text-primary); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px; margin-bottom: 16px;
+}
+.card-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; margin-bottom: 8px; }
+.note { color: var(--text-secondary); font-size: 12px; margin: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--text-secondary); margin-left: auto; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.key { display: inline-block; width: 14px; height: 2px; border-radius: 1px; }
+.chart-wrap { position: relative; }
+#chart { display: block; width: 100%; outline-offset: 2px; }
+#chart text { font-size: 11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+#chart text.hl-label { font-size: 12px; fill: var(--text-primary); font-weight: 600; }
+#tooltip {
+  position: absolute; top: 8px; pointer-events: none; display: none;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  padding: 8px 10px; font-size: 12px; line-height: 1.45;
+}
+#tooltip .date { color: var(--text-secondary); margin-bottom: 4px; }
+#tooltip .rows { display: grid; grid-template-rows: repeat(var(--rows), auto); grid-auto-flow: column; column-gap: 16px; }
+#tooltip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); }
+#tooltip .row b { color: var(--text-primary); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+#tooltip .row.hl { color: var(--text-primary); font-weight: 600; background: var(--wash); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 6px 10px; text-align: left; white-space: nowrap; }
+th { font-size: 12px; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--axis); }
+td { border-bottom: 1px solid var(--grid); }
+tbody tr:hover { background: var(--wash); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.cat { color: var(--text-secondary); }
+td.bar { width: 28%; min-width: 120px; }
+.bar-fill { height: 12px; min-width: 2px; border-radius: 0 4px 4px 0; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; }
+td a { color: inherit; text-decoration: none; }
+td a:hover { text-decoration: underline; }
+.up { color: var(--up); }
+.down { color: var(--down); }
+.spark { display: block; }
+footer { color: var(--text-secondary); font-size: 12px; }
+footer p { margin: 0 0 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>原子シミュレーション関連 Python パッケージの PyPI ダウンロード数</h1>
+  <p class="sub" id="sub"></p>
+
+  <div class="filters">
+    <div class="group">期間
+      <div class="seg" id="days">
+        <button type="button" data-v="30">30日</button>
+        <button type="button" data-v="90">90日</button>
+        <button type="button" data-v="180">180日</button>
+      </div>
+    </div>
+    <label>カテゴリ <select id="cat"></select></label>
+    <div class="group">縦軸
+      <div class="seg" id="scale">
+        <button type="button" data-v="log">対数</button>
+        <button type="button" data-v="linear">線形</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>1日あたりのダウンロード数 (7日移動平均)</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="chart-wrap">
+      <svg id="chart" height="420" tabindex="0" role="img"
+           aria-label="パッケージごとの1日あたりダウンロード数の推移。左右の矢印キーで日付、上下の矢印キーでパッケージを選べます。同じ値は下の表にあります。"></svg>
+      <div id="tooltip"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>期間内のダウンロード数</h2>
+      <p class="note">行にカーソルを置くと、上のグラフでそのパッケージを強調します。</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>パッケージ</th>
+            <th>カテゴリ</th>
+            <th class="num">期間合計</th>
+            <th></th>
+            <th class="num">1日平均</th>
+            <th class="num">直前の同じ日数との比</th>
+            <th>推移 (行ごとの尺度)</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <p>出典は pypistats.org の overall 系列で、ミラーによるダウンロードを除いた日次の値です。保持期間は180日です。</p>
+    <p>CI や自動インストールも数に入るため、値は利用者数ではなくインストール回数の目安です。数日だけの急増は、多くの場合その種の自動取得です。</p>
+    <p>conda-forge など PyPI 以外からのインストールは含みません。</p>
+  </footer>
+</main>
+
+<script src="data.js"></script>
+<script>
+const D = window.PYPI_DATA;
+const N = D.dates.length;
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ROLL = 7;
+const M = { left: 52, right: 16, top: 16, bottom: 28 };
+
+const PK = D.packages.map((p) => ({
+  name: p.name,
+  category: p.category,
+  downloads: p.downloads,
+  color: `var(--c${D.categories.indexOf(p.category) + 1})`,
+  roll: rolling(p.downloads, ROLL),
+}));
+
+const state = { days: 90, scale: "log", cat: "", hl: null, cursor: null };
+const chart = document.getElementById("chart");
+const tooltip = document.getElementById("tooltip");
+let geom = null;
+
+init();
+
+function init() {
+  document.getElementById("sub").textContent =
+    `${D.dates[0]} から ${D.dates[N - 1]} まで、${PK.length} パッケージ。取得日 ${D.fetched}。`;
+
+  const cat = document.getElementById("cat");
+  cat.append(new Option("すべて", ""));
+  for (const c of D.categories) cat.append(new Option(c, c));
+  cat.addEventListener("change", () => { state.cat = cat.value; state.hl = null; renderAll(); });
+
+  bindSeg("days", (v) => { state.days = Number(v); state.cursor = null; });
+  bindSeg("scale", (v) => { state.scale = v; });
+
+  const legend = document.getElementById("legend");
+  D.categories.forEach((c, i) => {
+    const item = el("span");
+    const key = el("i", { class: "key" });
+    key.style.background = `var(--c${i + 1})`;
+    item.append(key, c);
+    legend.append(item);
+  });
+
+  chart.addEventListener("pointermove", onPointer);
+  chart.addEventListener("pointerleave", () => { state.cursor = null; state.hl = null; renderChart(); });
+  chart.addEventListener("keydown", onKey);
+  chart.addEventListener("blur", () => { state.cursor = null; state.hl = null; renderChart(); });
+  window.addEventListener("resize", renderChart);
+  renderAll();
+}
+
+function renderAll() {
+  renderChart();
+  renderTable();
+}
+
+function visible() {
+  return PK.filter((p) => !state.cat || p.category === state.cat);
+}
+
+// ---- line chart ----
+
+function renderChart() {
+  const pk = visible();
+  const W = chart.clientWidth;
+  const H = Number(chart.getAttribute("height"));
+  const start = N - state.days;
+  const pw = W - M.left - M.right;
+  const ph = H - M.top - M.bottom;
+  chart.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  chart.replaceChildren();
+
+  const vals = pk.flatMap((p) => p.roll.slice(start).filter((v) => v !== null));
+  const axis = state.scale === "log" ? logAxis(vals) : linearAxis(vals);
+  const x = (i) => M.left + ((i - start) / (state.days - 1)) * pw;
+  const y = (v) => M.top + ph - axis.t(v) * ph;
+  geom = { start, x, y, pw, W };
+
+  for (const tick of axis.ticks) {
+    const ty = y(tick);
+    chart.append(svg("line", { x1: M.left, x2: W - M.right, y1: ty, y2: ty, stroke: "var(--grid)" }));
+    chart.append(svg("text", { x: M.left - 8, y: ty + 4, "text-anchor": "end" }, compact(tick)));
+  }
+  chart.append(svg("line", { x1: M.left, x2: W - M.right, y1: M.top + ph, y2: M.top + ph, stroke: "var(--axis)" }));
+  for (const [i, label] of xTicks(start)) {
+    chart.append(svg("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, label));
+  }
+
+  // the highlighted line is drawn last so it sits on top
+  const ordered = pk.filter((p) => p.name !== state.hl).concat(pk.filter((p) => p.name === state.hl));
+  for (const p of ordered) {
+    const isHl = p.name === state.hl;
+    chart.append(svg("path", {
+      d: linePath(p.roll, start, x, y),
+      fill: "none",
+      stroke: p.color,
+      "stroke-width": isHl ? 3 : 2,
+      "stroke-linejoin": "round",
+      "stroke-linecap": "round",
+      opacity: state.hl && !isHl ? 0.18 : 1,
+    }));
+  }
+
+  const hl = pk.find((p) => p.name === state.hl);
+  if (hl) {
+    const last = hl.roll[N - 1];
+    const ly = Math.max(M.top + 12, y(last) - 10);
+    chart.append(svg("text", {
+      x: W - M.right - 4, y: ly, "text-anchor": "end", class: "hl-label",
+      stroke: "var(--surface)", "stroke-width": 4, "paint-order": "stroke",
+    }, hl.name));
+  }
+
+  if (state.cursor === null) {
+    tooltip.style.display = "none";
+    return;
+  }
+  const cx = x(state.cursor);
+  chart.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)" }));
+  for (const p of ordered) {
+    const v = p.roll[state.cursor];
+    if (v === null) continue;
+    const isHl = p.name === state.hl;
+    chart.append(svg("circle", {
+      cx, cy: y(v), r: isHl ? 5 : 3, fill: p.color,
+      stroke: "var(--surface)", "stroke-width": isHl ? 2 : 1,
+      opacity: state.hl && !isHl ? 0.4 : 1,
+    }));
+  }
+  renderTooltip(pk, cx);
+}
+
+function renderTooltip(pk, cx) {
+  const i = state.cursor;
+  const rows = pk.filter((p) => p.roll[i] !== null).sort((a, b) => b.roll[i] - a.roll[i]);
+  const list = el("div", { class: "rows" });
+  list.style.setProperty("--rows", Math.ceil(rows.length / (rows.length > 10 ? 2 : 1)));
+  for (const p of rows) {
+    const key = el("i", { class: "key" });
+    key.style.background = p.color;
+    list.append(el("div", { class: p.name === state.hl ? "row hl" : "row" },
+      key, el("b", {}, full(p.roll[i])), p.name));
+  }
+  tooltip.replaceChildren(el("div", { class: "date" }, `${D.dates[i]} までの7日平均`), list);
+  tooltip.style.display = "block";
+  const onLeft = cx > geom.W / 2;
+  tooltip.style.left = onLeft ? "" : `${cx + 14}px`;
+  tooltip.style.right = onLeft ? `${geom.W - cx + 14}px` : "";
+}
+
+function onPointer(ev) {
+  const box = chart.getBoundingClientRect();
+  const px = ev.clientX - box.left;
+  const py = ev.clientY - box.top;
+  const rel = (px - M.left) / geom.pw;
+  const i = geom.start + Math.round(Math.min(1, Math.max(0, rel)) * (state.days - 1));
+  let best = null;
+  let bestDist = Infinity;
+  for (const p of visible()) {
+    if (p.roll[i] === null) continue;
+    const dist = Math.abs(geom.y(p.roll[i]) - py);
+    if (dist < bestDist) { best = p.name; bestDist = dist; }
+  }
+  if (i === state.cursor && best === state.hl) return;
+  state.cursor = i;
+  state.hl = best;
+  renderChart();
+}
+
+function onKey(ev) {
+  const start = N - state.days;
+  const first = Math.max(start, ROLL - 1);
+  if (state.cursor === null) state.cursor = N - 1;
+  const ranked = visible()
+    .filter((p) => p.roll[state.cursor] !== null)
+    .sort((a, b) => b.roll[state.cursor] - a.roll[state.cursor])
+    .map((p) => p.name);
+  const at = ranked.indexOf(state.hl);
+  if (ev.key === "ArrowLeft") state.cursor = Math.max(first, state.cursor - 1);
+  else if (ev.key === "ArrowRight") state.cursor = Math.min(N - 1, state.cursor + 1);
+  else if (ev.key === "ArrowDown") state.hl = ranked[Math.min(ranked.length - 1, at + 1)];
+  else if (ev.key === "ArrowUp") state.hl = ranked[Math.max(0, at - 1)];
+  else if (ev.key === "Escape") { state.cursor = null; state.hl = null; }
+  else return;
+  ev.preventDefault();
+  renderChart();
+}
+
+// ---- table ----
+
+function renderTable() {
+  const start = N - state.days;
+  const rows = visible().map((p) => {
+    const total = sum(p.downloads, start, N);
+    const prev = start - state.days >= 0 ? sum(p.downloads, start - state.days, start) : null;
+    return { p, total, change: prev ? total / prev - 1 : null };
+  }).sort((a, b) => b.total - a.total);
+  const max = Math.max(...rows.map((r) => r.total), 1);
+
+  const body = document.getElementById("rows");
+  body.replaceChildren();
+  for (const { p, total, change } of rows) {
+    const swatch = el("i", { class: "swatch" });
+    swatch.style.background = p.color;
+    const link = el("a", { href: `https://pypistats.org/packages/${p.name.toLowerCase()}` }, p.name);
+    const fill = el("div", { class: "bar-fill" });
+    fill.style.width = `${(total / max) * 100}%`;
+    fill.style.background = p.color;
+    const delta = el("td", { class: "num" }, "-");
+    if (change !== null) {
+      delta.textContent = `${change >= 0 ? "+" : "-"}${Math.abs(change * 100).toFixed(1)}%`;
+      delta.classList.add(change >= 0 ? "up" : "down");
+    }
+    const tr = el("tr", {},
+      el("td", {}, swatch, link),
+      el("td", { class: "cat" }, p.category),
+      el("td", { class: "num" }, full(total)),
+      el("td", { class: "bar" }, fill),
+      el("td", { class: "num" }, full(total / state.days)),
+      delta,
+      el("td", {}, sparkline(p.roll.slice(start))));
+    tr.addEventListener("pointerenter", () => { state.hl = p.name; renderChart(); });
+    tr.addEventListener("pointerleave", () => { state.hl = null; renderChart(); });
+    body.append(tr);
+  }
+}
+
+function sparkline(values) {
+  const w = 120;
+  const h = 24;
+  const known = values.filter((v) => v !== null);
+  const max = Math.max(...known, 1);
+  const node = svg("svg", { width: w, height: h, class: "spark", "aria-hidden": "true" });
+  const x = (i) => 1 + (i / (values.length - 1)) * (w - 2);
+  const y = (v) => h - 2 - (v / max) * (h - 4);
+  node.append(svg("path", {
+    d: linePath(values, 0, x, y), fill: "none", stroke: "var(--text-muted)",
+    "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round",
+  }));
+  return node;
+}
+
+// ---- helpers ----
+
+function rolling(values, window) {
+  return values.map((_, i) => (i < window - 1 ? null : sum(values, i - window + 1, i + 1) / window));
+}
+
+function sum(values, from, to) {
+  let total = 0;
+  for (let i = from; i < to; i++) total += values[i];
+  return total;
+}
+
+function logAxis(vals) {
+  const positive = vals.filter((v) => v > 0);
+  const lo = Math.max(0, Math.floor(Math.log10(Math.min(...positive, 1e9))));
+  const hi = Math.max(lo + 1, Math.ceil(Math.log10(Math.max(...positive, 10))));
+  const ticks = [];
+  for (let e = lo; e <= hi; e++) ticks.push(10 ** e);
+  return { ticks, t: (v) => (Math.log10(Math.max(v, 10 ** lo)) - lo) / (hi - lo) };
+}
+
+function linearAxis(vals) {
+  const max = Math.max(...vals, 1);
+  const raw = max / 5;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+  const top = Math.ceil(max / step) * step;
+  const ticks = [];
+  for (let v = 0; v <= top + step / 2; v += step) ticks.push(v);
+  return { ticks, t: (v) => v / top };
+}
+
+function xTicks(start) {
+  const ticks = [];
+  if (state.days <= 30) {
+    for (let i = N - 1; i >= start; i -= 7) {
+      const [, m, d] = D.dates[i].split("-");
+      ticks.push([i, `${Number(m)}/${Number(d)}`]);
+    }
+  } else {
+    for (let i = start; i < N; i++) {
+      const [, m, d] = D.dates[i].split("-");
+      if (d === "01") ticks.push([i, `${Number(m)}月`]);
+    }
+  }
+  return ticks;
+}
+
+function linePath(values, offset, x, y) {
+  let d = "";
+  let pen = false;
+  for (let k = offset; k < values.length; k++) {
+    const v = values[k];
+    if (v === null) { pen = false; continue; }
+    d += `${pen ? "L" : "M"}${x(k).toFixed(1)},${y(v).toFixed(1)}`;
+    pen = true;
+  }
+  return d;
+}
+
+function compact(n) {
+  const short = (v, unit) => `${v >= 100 ? Math.round(v) : Number(v.toFixed(1))}${unit}`;
+  if (n >= 1e6) return short(n / 1e6, "M");
+  if (n >= 1e3) return short(n / 1e3, "K");
+  return String(Math.round(n));
+}
+
+function full(n) {
+  return Math.round(n).toLocaleString("en-US");
+}
+
+function bindSeg(id, apply) {
+  const buttons = [...document.getElementById(id).querySelectorAll("button")];
+  const sync = () => buttons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === String(state[id]))));
+  buttons.forEach((b) => b.addEventListener("click", () => { apply(b.dataset.v); sync(); renderAll(); }));
+  sync();
+}
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  node.append(...children);
+  return node;
+}
+
+function svg(tag, attrs = {}, text) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+</script>
+</body>
+</html>
