@@ -13,9 +13,7 @@ installs, at the cost of dropping real Linux use too. `python3 fetch_stats.py`
 also adds the most-downloaded packages that depend on the curated ones, up to
 100 in total, found by walking declared dependencies recursively in ClickPy's
 copy of the PyPI metadata; that endpoint has an hourly read quota, so a refused
-run succeeds after the hour turns. The page is deployed to GitHub Pages by
-`.github/workflows/pages.yml` on every push that touches `docs/`, and also
-opens straight from disk. The committed snapshot of 2026-11-19 (2026-05-22 to
+run succeeds after the hour turns. The page opens straight from disk. The committed snapshot of 2026-11-19 (2026-05-22 to
 2026-11-18) holds 100 packages: the curated list and 62 of its 1589
 dependents. Within the curated list, its 180-day totals are led by ase
 (11.8M), spglib (10.8M), seekpath (6.1M), pyxtal (5.8M), moyopy (5.2M) and
