@@ -157,8 +157,9 @@ td { border-bottom: 1px solid var(--grid); }
 tbody tr:hover { background: var(--wash); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.cat { color: var(--text-secondary); }
+td.wrap { white-space: normal; min-width: 140px; max-width: 200px; font-size: 12px; line-height: 1.3; }
 td.muted { color: var(--text-muted); }
-td.bar { width: 22%; min-width: 120px; }
+td.bar { width: 12%; min-width: 80px; }
 .bar-fill { height: 12px; min-width: 2px; border-radius: 0 4px 4px 0; }
 .icon { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
 span.icon { background: var(--wash); color: var(--text-muted); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
@@ -348,6 +349,11 @@ const PK = D.packages.map((p) => ({
   ...p,
   color: `var(--c${D.categories.indexOf(p.category) + 1})`,
   roll: Object.fromEntries(OS.map((os) => [os, rolling(p.daily[os])])),
+  // months before the first download are not drawn
+  monthly: Object.fromEntries(OS.map((os) => {
+    const born = p.monthly.all.findIndex((v) => v > 0);
+    return [os, p.monthly[os].map((v, i) => (born < 0 || i < born ? null : v))];
+  })),
 }));
 // the first month with any download, where "All years" starts
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
@@ -373,7 +379,7 @@ function init() {
   document.getElementById("bulk-min").textContent = full(D.bulk_min);
   for (const node of document.querySelectorAll(".auto-days")) node.textContent = D.automation_days;
   document.getElementById("ci-head").textContent = `CI, ${D.automation_days} d`;
-  document.getElementById("bulk-head").textContent = `Bulk rebuilds, ${D.automation_days} d`;
+  document.getElementById("bulk-head").textContent = `Bulk, ${D.automation_days} d`;
   document.getElementById("bulk-head").title =
     `Share of downloads of the last ${D.automation_days} days from one environment downloading one version at least ${full(D.bulk_min)} times a day`;
 
@@ -451,10 +457,15 @@ function totals(p) {
     const s = p.daily[state.os];
     const start = N - state.days;
     const prev = start - state.days >= 0 ? sum(s, start - state.days, start) : null;
-    return { total: sum(s, start, N), prev, days: state.days };
+    const total = sum(s, start, N);
+    return {
+      total, days: state.days,
+      change: prev > 0 ? total / prev - 1 : null,
+      basePerDay: (prev ?? 0) / state.days,
+    };
   }
   const s = p.monthly[state.os];
-  const monthTotal = (i) => s[i] * MONTH_DAYS[i];
+  const monthTotal = (i) => (s[i] ?? 0) * MONTH_DAYS[i];
   let total = 0;
   let days = 0;
   for (let i = FIRST_MONTH; i < NM; i++) { total += monthTotal(i); days += MONTH_DAYS[i]; }
@@ -463,7 +474,7 @@ function totals(p) {
   let prev12 = 0;
   for (let i = NM - 12; i < NM; i++) last12 += monthTotal(i);
   for (let i = NM - 24; i < NM - 12; i++) prev12 += monthTotal(i);
-  return { total, days, change: prev12 > 0 ? last12 / prev12 - 1 : null };
+  return { total, days, change: prev12 > 0 ? last12 / prev12 - 1 : null, basePerDay: prev12 / 365 };
 }
 
 // packages passing the filters, largest period total first
@@ -474,8 +485,7 @@ function visible() {
       && (!state.q || p.name.toLowerCase().includes(state.q)))
     .map((p) => {
       const t = totals(p);
-      const change = state.days ? (t.prev > 0 ? t.total / t.prev - 1 : null) : t.change;
-      return { p, total: t.total, perDay: t.total / t.days, change };
+      return { p, total: t.total, perDay: t.total / t.days, change: t.change, basePerDay: t.basePerDay };
     })
     .sort((a, b) => b.total - a.total);
 }
@@ -485,7 +495,8 @@ function visible() {
 function renderStats() {
   const rows = visible();
   const total = rows.reduce((s, r) => s + r.total, 0);
-  const withChange = rows.filter((r) => r.change !== null && r.total > 1000);
+  // a floor of 100 downloads a day before the rise keeps tiny packages with huge relative jumps out
+  const withChange = rows.filter((r) => r.change !== null && r.basePerDay >= 100);
   const riser = withChange.sort((a, b) => b.change - a.change)[0];
   const listed = PK.filter((p) => p.via === null).length;
   const period = state.days ? `last ${state.days} days` : `since ${D.months[FIRST_MONTH]}`;
@@ -554,9 +565,10 @@ function renderChart() {
   }
   const labels = endLabels(pk.slice(0, MAX_LABELS), ax, y, ph);
   for (const label of labels) {
+    // dotted, so that a label pushed far from its line end is not read as a drop
     chart.append(svg("line", {
-      x1: W - M.right, y1: y(ax.values(label.p)[ax.n - 1]), x2: W - M.right + 10, y2: label.y,
-      stroke: label.p.color, opacity: 0.6,
+      x1: W - M.right + 2, y1: y(ax.values(label.p)[ax.n - 1]), x2: W - M.right + 10, y2: label.y,
+      stroke: label.p.color, opacity: 0.5, "stroke-dasharray": "1 2",
     }));
     label.text = svg("text", { x: W - M.right + 14, y: label.y + 4, class: "end-label" }, label.p.name);
     chart.append(label.text);
@@ -762,7 +774,7 @@ function stopRace() {
 
 function renderTable() {
   const ax = axis();
-  document.getElementById("change-head").textContent = state.days ? "vs. preceding period" : "Last 12 months vs. 12 before";
+  document.getElementById("change-head").textContent = state.days ? "vs. preceding period" : "Last 12 mo. vs. prior 12";
   for (const th of document.querySelectorAll("th[data-sort]")) {
     th.setAttribute("aria-sort", th.dataset.sort === state.sort ? (state.desc ? "descending" : "ascending") : "none");
   }
@@ -793,7 +805,7 @@ function renderTable() {
     }
     const tr = el("tr", {},
       el("td", {}, icon(p), link),
-      el("td", { class: "cat" }, p.category),
+      el("td", { class: "cat wrap" }, p.category),
       el("td", { class: "cat" }, p.via ?? "listed"),
       el("td", { class: "cat" }, p.since ?? "-"),
       el("td", { class: "num" }, full(total)),
