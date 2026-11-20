@@ -57,7 +57,7 @@ the per-system view, which cannot exclude mirrors, but mirrors report no system.
 
 Top level: `fetched`, `dates` (daily ISO days), `months` (`YYYY-MM`),
 `automation_days`, `bulk_min`, `categories` (= `list(SEEDS)`), `packages[]`.
-Each package: `name`, `category`, `via` (`null` for listed seeds; drives the
-"Listed" vs "With dependents" filter), `owner`, `since`, `daily` and `monthly`
+Each package: `name`, `category`, `via` (`null` for listed seeds; shown as
+"Found via"), `owner`, `since`, `daily` and `monthly`
 (each `{all, linux, desktop}` aligned with `dates` / `months`), `ci`, `bulk`
 (shares or `null`). Changing a field means editing both files.

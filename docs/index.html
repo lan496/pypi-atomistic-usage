@@ -207,12 +207,6 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
         <button type="button" data-v="0">All years</button>
       </div>
     </div>
-    <div class="group">Packages
-      <div class="seg" id="set">
-        <button type="button" data-v="curated">Listed</button>
-        <button type="button" data-v="all">With dependents</button>
-      </div>
-    </div>
     <label>Category <select id="cat"></select></label>
     <div class="group">Platform
       <div class="seg" id="os">
@@ -298,10 +292,10 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
           The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
           The data are refreshed monthly.</p>
         <h3>Packages</h3>
-        <p>"Listed" packages are a hand-picked list, every PyPI package of
+        <p>Listed packages are a hand-picked list, every PyPI package of
           <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>,
           and the simulation engines of <a href="https://atomistic.software">atomistic.software</a> that install from PyPI.
-          "With dependents" adds the most-downloaded packages whose latest release requires a listed package, directly or through other dependents; a dependency declared only in an optional extra does not count, and general-purpose libraries such as RDKit and DGL are not followed.
+          The page also shows the most-downloaded dependents: packages whose latest release requires a listed package, directly or through other dependents, named in the "Found via" column; a dependency declared only in an optional extra does not count, and general-purpose libraries such as RDKit and DGL are not followed.
           A dependent takes the category of the package it was found through.
           <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md">Suggest a package.</a></p>
       </div>
@@ -363,7 +357,7 @@ const PK = D.packages.map((p) => ({
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
 const state = {
-  days: 90, os: "all", set: "all", cat: "", lines: 25, scale: "log", q: "",
+  days: 90, os: "all", cat: "", lines: 25, scale: "log", q: "",
   sort: "total", desc: true, hl: null, cursor: null,
 };
 const chart = document.getElementById("chart");
@@ -396,7 +390,6 @@ function init() {
 
   bindSeg("days", Number);
   bindSeg("os", String);
-  bindSeg("set", String);
   bindSeg("lines", Number);
   bindSeg("scale", String);
 
@@ -484,8 +477,7 @@ function totals(p) {
 // packages passing the filters, largest period total first
 function visible() {
   return PK
-    .filter((p) => (state.set === "all" || p.via === null)
-      && (!state.cat || p.category === state.cat)
+    .filter((p) => (!state.cat || p.category === state.cat)
       && (!state.q || p.name.toLowerCase().includes(state.q)))
     .map((p) => {
       const t = totals(p);
@@ -506,7 +498,7 @@ function renderStats() {
   const period = state.days ? `last ${state.days} days` : `since ${D.months[FIRST_MONTH]}`;
   const box = document.getElementById("stats");
   box.replaceChildren(
-    stat("Packages shown", full(rows.length), `${listed} listed, ${PK.length - listed} dependents in the data`),
+    stat("Packages shown", full(rows.length), `${listed} listed, ${PK.length - listed} dependents`),
     stat("Downloads", compact(total), `${period}, ${platformName()}`),
     stat("Most downloaded", rows[0] ? rows[0].p.name : "-", rows[0] ? `${compact(rows[0].perDay)} per day` : ""),
     stat("Fastest growing", riser ? riser.p.name : "-",
