@@ -11,7 +11,7 @@ machine learning that are published on PyPI. To add one:
    fits it best. Each package appears once.
 2. If its PyPI metadata does not link its GitHub repository, add the GitHub
    owner to `GITHUB_OWNERS` so that the page shows an avatar.
-3. Open a pull request. You need not regenerate `docs/data.js`: the weekly job
+3. Open a pull request. You need not regenerate `docs/data.js`: the monthly job
    fetches fresh data for the whole list.
 
 Packages that depend on a listed one are found automatically, so a plugin or

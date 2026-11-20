@@ -15,7 +15,7 @@ atomistic-ML packages, published on GitHub Pages. Two pieces, joined only by
   everything as hand-built SVG. It opens straight from disk.
 
 There are no tests, linters, or build. `.github/workflows/pages.yml` refreshes
-the data every Monday, commits it, and deploys `docs/` to Pages.
+the data on the 2nd of every month, commits it, and deploys `docs/` to Pages.
 
 ## Commands
 

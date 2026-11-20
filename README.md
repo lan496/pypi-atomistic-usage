@@ -25,7 +25,7 @@ installs, not people.
 public copy of the PyPI download logs and metadata, and PyPI's JSON API, and
 writes `docs/data.js`. `docs/index.html` reads it and draws everything in the
 browser; it opens straight from disk. A GitHub Actions job refreshes the data
-every Monday and publishes `docs/` to GitHub Pages.
+on the 2nd of every month and publishes `docs/` to GitHub Pages.
 
 ## Contributing
 

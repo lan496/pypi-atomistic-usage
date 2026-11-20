@@ -1,12 +1,12 @@
 name: Publish
 
-# Every Monday the data are refreshed and committed; every push to main and
-# every refresh publishes docs/ to GitHub Pages.
+# On the 2nd of every month the data are refreshed and committed; every push
+# to main and every refresh publishes docs/ to GitHub Pages.
 on:
   push:
     branches: [main]
   schedule:
-    - cron: "17 3 * * 1"
+    - cron: "17 3 2 * *"
   workflow_dispatch:
     inputs:
       refresh:
