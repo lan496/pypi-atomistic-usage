@@ -65,7 +65,6 @@ SEEDS = {
         "torch-dftd",
         "torch-sim-atomistic",
         "nvalchemi-toolkit-ops",
-        "matbench-discovery",
         # further potentials on the Matbench Discovery leaderboard
         "fairchem-core",
         "orb-models",
@@ -98,7 +97,6 @@ SEEDS = {
         "aiida-mlip",
         "m3gnet",
         "pet-mad",
-        "ffonons",
     ],
     "Simulation engines and MD": [
         "openmm",
@@ -174,6 +172,8 @@ SEEDS = {
     ],
     "Datasets and benchmarks": [
         "matbench",
+        "matbench-discovery",
+        "ffonons",
         "garden-ai",
         "ml-peg",
         "mpcontribs-client",
@@ -233,6 +233,49 @@ NO_WALK = {
     "paper-qa",
     "cuequivariance",
 }
+# Categories of dependents by what they do, keyed by normalized name; a dependent
+# missing here inherits the category of the package it was found through, which
+# is often wrong (sumo plots band structures but is found through phonopy).
+# Review new dependents after each refresh and add them here.
+DEPENDENT_CATEGORIES = {
+    **dict.fromkeys(
+        [
+            "structuregraph-helpers", "pymatgen-core", "irrep", "irreptables",
+            "spgrep", "matid", "molify", "robocrys",
+        ],
+        "Structure and symmetry",
+    ),
+    **dict.fromkeys(["euphonic", "symfc"], "Phonons"),
+    **dict.fromkeys(
+        [
+            # analysis, plotting and property post-processing
+            "sumo", "easyunfold", "amset", "tb2j", "dara-xrd", "xraylarch", "larixite",
+            "pymatgen-analysis-alloys", "pymatgen-analysis-defects",
+            "pymatgen-analysis-diffusion",
+            # defects and calculation set-up
+            "doped", "pydefect", "shakenbreak", "vise", "pymatgen-io-validation",
+            # workflow managers
+            "quacc", "ai2-kit",
+            # MDAnalysis plugins
+            "mdahole2", "pathsimanalysis", "prolif", "sqq",
+        ],
+        "Workflows and post-processing",
+    ),
+    **dict.fromkeys(["aenet-gpr", "neptrainkit"], "Machine-learning potentials"),
+    **dict.fromkeys(
+        ["abtem", "sella", "matscipy", "icet", "clease", "kups", "asi4py", "carcara"],
+        "Simulation engines and MD",
+    ),
+    **dict.fromkeys(["element-coder", "quests"], "Representations and general ML tools"),
+    **dict.fromkeys(
+        ["mp-api", "emmet-core", "emmet-api", "emmet-builders", "aflow", "ase-db-backends", "molid"],
+        "Datasets and benchmarks",
+    ),
+    **dict.fromkeys(
+        ["chemeleon-dng", "porran", "pormake", "reaction-network"],
+        "Generative, active-learning and other ML",
+    ),
+}
 # GitHub owners of packages whose PyPI metadata links no GitHub repository.
 # ase and hiphive are hosted on GitLab and get no avatar.
 GITHUB_OWNERS = {
@@ -285,6 +328,9 @@ def seed_packages() -> dict[str, dict]:
             if key in seeds:
                 raise ValueError(f"{name} is listed twice in SEEDS")
             seeds[key] = {"name": name, "category": category, "via": None}
+    for key, category in DEPENDENT_CATEGORIES.items():
+        if key != normalize(key) or category not in SEEDS:
+            raise ValueError(f"DEPENDENT_CATEGORIES: bad entry {key!r}: {category!r}")
     return seeds
 
 
@@ -440,7 +486,8 @@ def fetch_pypi(key: str) -> dict:
 
 
 def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
-    """Walk dependents breadth-first; each inherits the category of its parent."""
+    """Walk dependents breadth-first; each takes its category from
+    DEPENDENT_CATEGORIES, or else inherits the category of its parent."""
     known = dict(seeds)
     found = {}
     frontier = sorted(key for key in seeds if key not in NO_WALK)
@@ -461,7 +508,7 @@ def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
             parent = known[min(row["parents"])]
             level[key] = {
                 "name": row["name"],
-                "category": parent["category"],
+                "category": DEPENDENT_CATEGORIES.get(key, parent["category"]),
                 "via": parent["name"],
             }
         print(f"depth {depth}: {len(level)} new dependents")

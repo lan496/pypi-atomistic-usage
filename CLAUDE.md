@@ -32,7 +32,9 @@ the data on the 2nd of every month, commits it, and deploys `docs/` to Pages.
 2. `find_dependents`: breadth-first walk of reverse dependencies on ClickPy's
    `pypi.projects`. Only the latest release's non-extra `requires_dist` counts.
    Seeds in `NO_WALK` (general-purpose libraries) are not walked from.
-   `MAX_FRONTIER` aborts if a seed is too general.
+   `MAX_FRONTIER` aborts if a seed is too general. A dependent's category comes
+   from `DEPENDENT_CATEGORIES` (by what it does), else from its parent; review
+   new dependents after a refresh and add them there.
 3. `rank_by_downloads` keeps the top `N_DEPENDENTS`.
 4. `write_data`: daily series (last `DAILY_DAYS`) and monthly series (whole
    history, as mean per day) from ClickPy materialized views; CI and
