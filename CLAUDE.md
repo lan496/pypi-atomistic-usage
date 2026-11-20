@@ -4,8 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A static dashboard of PyPI download counts for atomistic-simulation packages.
-Two pieces, joined only by `docs/data.js`:
+A static dashboard of PyPI download counts for atomistic-simulation and
+atomistic-ML packages, published on GitHub Pages. Two pieces, joined only by
+`docs/data.js`:
 
 - `fetch_stats.py` (stdlib only, no dependencies, no venv) queries the network
   and writes `docs/data.js` as `window.PYPI_DATA = {...};`.
@@ -13,45 +14,50 @@ Two pieces, joined only by `docs/data.js`:
   build step, no libraries) that loads `data.js` via `<script>` and renders
   everything as hand-built SVG. It opens straight from disk.
 
-There are no tests, linters, or build. The README's prose quotes numbers from
-the committed snapshot (date, package count, top totals); update it whenever
-`docs/data.js` is regenerated.
+There are no tests, linters, or build. `.github/workflows/pages.yml` refreshes
+the data every Monday, commits it, and deploys `docs/` to Pages.
 
 ## Commands
 
-- Regenerate data: `python3 fetch_stats.py` (network; several minutes because of
-  the 2 s pause between per-package requests).
+- Regenerate data: `python3 fetch_stats.py` (about 5 minutes; needs network
+  access to `sql-clickhouse.clickhouse.com` and `pypi.org`).
 - View: open `docs/index.html` in a browser.
 
 ## Data pipeline (`fetch_stats.py`)
 
-1. `SEEDS`: curated packages grouped by category. Category order fixes each
-   category's colour (`--c1`..`--c8` in `index.html`, 8 at most) -- append
-   new categories, never reorder.
-2. `find_dependents`: breadth-first walk of reverse dependencies via SQL on
-   ClickPy (`sql-clickhouse.clickhouse.com`, public `demo` user). Only the latest
-   release's non-extra `requires_dist` counts. Each dependent inherits its
-   parent's category and records it in `via`. `MAX_FRONTIER` aborts the walk if
-   a seed is too general.
-3. `rank_by_downloads`: ClickPy download totals pick the top dependents so the
-   total is `N_PACKAGES` (100).
-4. `write_data`: for each kept package, pypistats.org's per-OS 180-day daily
-   series (mirrors excluded) and a GitHub owner for the avatar (from
-   `GITHUB_OWNERS` overrides, else parsed from PyPI `project_urls`).
+1. `SEEDS`: listed packages grouped by category: a curated core, all PyPI
+   packages of best-of-atomistic-machine-learning, and the PyPI-installable
+   engines of atomistic.software. Category order fixes each category's colour
+   (`--c1`..`--c8` in `index.html`, 8 at most): append, never reorder.
+2. `find_dependents`: breadth-first walk of reverse dependencies on ClickPy's
+   `pypi.projects`. Only the latest release's non-extra `requires_dist` counts.
+   Seeds in `NO_WALK` (general-purpose libraries) are not walked from.
+   `MAX_FRONTIER` aborts if a seed is too general.
+3. `rank_by_downloads` keeps the top `N_DEPENDENTS`.
+4. `write_data`: daily series (last `DAILY_DAYS`) and monthly series (whole
+   history, as mean per day) from ClickPy materialized views; CI and
+   bulk-rebuild shares over the last `AUTOMATION_DAYS` from the raw
+   `pypi.pypi` table; GitHub owner and first release date from PyPI JSON.
 
-Gotchas:
+ClickPy demo user limits that shape the code:
 
-- ClickPy has an hourly read quota; a refused run succeeds after the hour turns.
-  `http_get` retries with backoff on other transient HTTP errors, but not 404.
-- Package keys are PEP 503-normalized (`normalize` / `norm_sql`); SQL literals
-  go through `sql_tuple`, which rejects quotes and backslashes.
+- At most 10,000 result rows per query: series queries return one row per
+  project with a `groupArray` of points.
+- 60 s per query: raw-table queries are batched by `AUTOMATION_BATCH_ROWS`.
+- 60 queries and 600 s of execution per hour: a refused run succeeds after the
+  hour turns. Check usage with `SELECT * FROM system.quota_usage`.
+- ClickPy project names are already PEP 503-normalized; `pypi.projects.name`
+  is not, hence `norm_sql`. Some packages (e.g. mace-torch) are missing from
+  `pypi.projects`, so metadata comes from PyPI JSON instead.
+
+"all" excludes mirror installers (installer view); "linux"/"desktop" come from
+the per-system view, which cannot exclude mirrors, but mirrors report no system.
 
 ## Data contract (`docs/data.js`)
 
-`fetched`, `dates` (contiguous ISO days), `categories` (= `list(SEEDS)`), and
-`packages[]` with `name`, `category`, `via` (`null` for curated seeds; the page
-uses this for the "Curated" vs "With dependents" filter), `owner`, and three
-daily arrays aligned with `dates`: `all`, `linux`, `desktop` (Darwin + Windows).
-The "macOS + Windows" platform filter is the stand-in for excluding CI installs,
-since pypistats cannot identify them. Changing a field name means editing both
-files.
+Top level: `fetched`, `dates` (daily ISO days), `months` (`YYYY-MM`),
+`automation_days`, `bulk_min`, `categories` (= `list(SEEDS)`), `packages[]`.
+Each package: `name`, `category`, `via` (`null` for listed seeds; drives the
+"Listed" vs "With dependents" filter), `owner`, `since`, `daily` and `monthly`
+(each `{all, linux, desktop}` aligned with `dates` / `months`), `ci`, `bulk`
+(shares or `null`). Changing a field means editing both files.

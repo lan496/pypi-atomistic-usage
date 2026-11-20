@@ -1,23 +1,40 @@
-# PyPI download counts of atomistic-simulation packages
+# Atomistic PyPI usage
 
-How much are atomistic-simulation Python packages used, judged by the daily
-download counts on pypistats.org? `fetch_stats.py` starts from a curated list
-of 38 packages in five categories (`SEEDS`) and pulls each one's 180-day daily
-series by operating system (mirrors excluded) from pypistats into
-`docs/data.js`. `docs/index.html` reads it and shows a 7-day-mean line chart
-with each line named at its end, a bar chart race, and a ranked table with the
-GitHub avatar of each repository owner, filterable by period, platform,
-package set and category. pypistats cannot tell CI downloads apart, so the
-platform filter is the stand-in: "macOS + Windows" drops nearly all automated
-installs, at the cost of dropping real Linux use too. `python3 fetch_stats.py`
-also adds the most-downloaded packages that depend on the curated ones, up to
-100 in total, found by walking declared dependencies recursively in ClickPy's
-copy of the PyPI metadata; that endpoint has an hourly read quota, so a refused
-run succeeds after the hour turns. The page opens straight from disk. The committed snapshot of 2026-11-19 (2026-05-22 to
-2026-11-18) holds 100 packages: the curated list and 62 of its 1589
-dependents. Within the curated list, its 180-day totals are led by ase
-(11.8M), spglib (10.8M), seekpath (6.1M), pyxtal (5.8M), moyopy (5.2M) and
-pymatgen (5.0M), and the largest machine-learning-potential packages are
-nvalchemi-toolkit-ops (1.7M), nequix (0.98M) and mace-torch (0.65M). On macOS
-and Windows alone the order is ase, spglib, pymatgen, MDAnalysis, phonopy, and
-the multi-day bursts seen on Linux are absent.
+How much are the Python packages of atomistic simulation and atomistic machine
+learning used? This dashboard shows the PyPI downloads of about 200 of them:
+
+- a curated list of structure, symmetry, phonon, workflow and
+  machine-learning-potential packages,
+- every PyPI package of
+  [best-of-atomistic-machine-learning](https://github.com/JuDFTteam/best-of-atomistic-machine-learning),
+- the simulation engines of [atomistic.software](https://atomistic.software)
+  that install from PyPI,
+- the most-downloaded packages that depend on any of the above.
+
+**Dashboard: <https://lan496.github.io/pypi-atomistic-usage/>**
+
+It shows daily downloads over the last 180 days and monthly downloads back to
+2016, by platform, as a line chart, a bar chart race and a sortable table. The
+table also estimates how much of each package's downloads come from CI runs and
+from bulk rebuilds of one pinned environment, since download counts measure
+installs, not people.
+
+## How it works
+
+`fetch_stats.py` queries [ClickPy](https://clickpy.clickhouse.com), ClickHouse's
+public copy of the PyPI download logs and metadata, and PyPI's JSON API, and
+writes `docs/data.js`. `docs/index.html` reads it and draws everything in the
+browser; it opens straight from disk. A GitHub Actions job refreshes the data
+every Monday and publishes `docs/` to GitHub Pages.
+
+## Contributing
+
+Missing a package? See [CONTRIBUTING.md](CONTRIBUTING.md); adding one is a
+one-line change.
+
+## Credits
+
+The project is inspired by [atomistic.software](https://atomistic.software),
+which tracks the citations of atomistic simulation engines. The queries follow
+the materialized views of [ClickPy](https://github.com/ClickHouse/clickpy)
+(Apache-2.0).
