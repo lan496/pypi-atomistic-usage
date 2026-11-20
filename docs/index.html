@@ -8,7 +8,7 @@
 <meta property="og:title" content="Atomistic PyPI usage">
 <meta property="og:description" content="How much are atomistic-simulation Python packages used? PyPI downloads of about 200 packages, updated monthly.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5' fill='%232a78d6'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%23eb6834' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%231baf7a' stroke-width='2' transform='rotate(60 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%23eda100' stroke-width='2' transform='rotate(120 16 16)'/%3E%3C/svg%3E">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
 <style>
 :root {
   color-scheme: light;
@@ -34,9 +34,12 @@
   --c7: #6250d6;
   --c8: #e34948;
   --radius: 12px;
+  --brand-ink: #0b3566;
+  --brand-accent: #06a9cf;
 }
+/* figure export adds .export to draw in the light colours whatever the theme */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.export) {
     color-scheme: dark;
     --page: #0d0d0d;
     --surface: #171716;
@@ -59,6 +62,8 @@
     --c6: #0ca30c;
     --c7: #9085e9;
     --c8: #e66767;
+    --brand-ink: #f0efec;
+    --brand-accent: #2cc3e6;
   }
 }
 * { box-sizing: border-box; }
@@ -75,8 +80,12 @@ code { font-size: 12px; background: var(--wash); border-radius: 4px; padding: 1p
 
 /* ---- masthead ---- */
 .topbar { display: flex; align-items: center; gap: 16px; padding: 16px 0; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-primary); text-decoration: none; }
-.brand svg { width: 28px; height: 28px; }
+.brand {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  font-size: 17px; font-weight: 750; letter-spacing: -0.015em; color: var(--brand-ink);
+}
+.brand img { width: 36px; height: 36px; }
+.brand b { font-weight: inherit; color: var(--brand-accent); }
 .topbar nav { display: flex; gap: 4px; margin-left: auto; }
 .topbar nav a {
   color: var(--text-secondary); text-decoration: none; border-radius: 8px; padding: 6px 10px;
@@ -253,6 +262,48 @@ td a:hover { text-decoration: underline; }
 .spark { display: block; }
 .empty { color: var(--text-muted); text-align: center; padding: 24px; }
 
+/* ---- analysis plots ---- */
+.plot { display: block; width: 100%; }
+.plot text { font-size: 11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+.plot text.lbl { fill: var(--text-secondary); font-size: 11.5px; }
+.plot text.axis-title { fill: var(--text-secondary); font-weight: 600; }
+.headline { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
+.headline small { font-size: 13px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
+.growth { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; }
+.mini-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.mini-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--grid); font-size: 13px; min-width: 0; }
+.mini-list li span.name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-list .icon { margin-right: 0; width: 16px; height: 16px; line-height: 16px; font-size: 9px; flex: none; }
+.mini-list .v { margin-left: auto; color: var(--text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mini-list .y { color: var(--text-muted); font-size: 11px; }
+.split.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.deps td.kids { white-space: normal; min-width: 220px; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.deps td.kids span { color: var(--text-muted); }
+.tip {
+  position: fixed; z-index: 10; pointer-events: none; display: none; max-width: 320px;
+  background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); padding: 8px 10px; font-size: 12px; line-height: 1.45;
+}
+.tip .t { font-weight: 600; margin-bottom: 2px; }
+.tip .m { color: var(--text-muted); }
+.tip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); }
+.tip .row b { margin-left: auto; padding-left: 12px; color: var(--text-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
+.tip .row.hl { color: var(--text-primary); font-weight: 600; }
+.tools { display: flex; gap: 4px; align-items: center; }
+.tools button {
+  font: inherit; font-size: 12px; color: var(--text-secondary); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--border); border-radius: 7px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px;
+}
+.tools button:hover { color: var(--text-primary); background: var(--wash); }
+.tools svg { width: 12px; height: 12px; }
+.more-row { display: flex; justify-content: center; padding: 14px 0 0; }
+.more-btn {
+  font: inherit; font-size: 13px; font-weight: 500; color: var(--text-primary); background: var(--surface); cursor: pointer;
+  border: 1px solid var(--border); border-radius: 999px; padding: 5px 16px;
+}
+.more-btn:hover { background: var(--wash); }
+.more-row[hidden] { display: none; }
+
 /* ---- about ---- */
 .about { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 32px; color: var(--text-secondary); }
 .about p { margin: 0 0 10px; }
@@ -261,7 +312,7 @@ footer a { color: inherit; }
 
 @media (max-width: 960px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .split, .about { grid-template-columns: minmax(0, 1fr); }
+  .split, .split.even, .about, .growth { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
   main { padding: 0 14px 24px; }
@@ -280,8 +331,8 @@ footer a { color: inherit; }
 <main>
   <div class="topbar">
     <a class="brand" href="./">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="4.5" fill="var(--c1)"/><ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="var(--c2)" stroke-width="1.8"/><ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="var(--c3)" stroke-width="1.8" transform="rotate(60 16 16)"/><ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="var(--c4)" stroke-width="1.8" transform="rotate(120 16 16)"/></svg>
-      Atomistic PyPI usage
+      <img src="logo.svg" alt="">
+      <span>Atomistic <b>PyPI</b> usage</span>
     </a>
     <nav>
       <a href="#about"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/></svg><span>About</span></a>
@@ -344,8 +395,10 @@ footer a { color: inherit; }
     <div class="card-head">
       <div>
         <h2 id="chart-title"></h2>
-        <p class="note">Hover to read values; arrow keys move the date and the selected package. Colours follow the categories above.</p>
+        <p class="note" id="chart-note"></p>
+        <p class="note hint">Hover to read values; arrow keys move the date and the selected package. Colours follow the categories above; with one category shown, each package gets its own colour.</p>
       </div>
+      <div class="tools" data-fig="chart"></div>
     </div>
     <div class="chart-wrap">
       <svg id="chart" height="460" tabindex="0" role="img"
@@ -354,7 +407,55 @@ footer a { color: inherit; }
     </div>
   </section>
 
-  <div class="split">
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>The field over time</h2>
+        <p class="headline" id="era-headline"></p>
+        <p class="note" id="era-note"></p>
+        <p class="note hint">Hover to read each category; click an area to filter by it.</p>
+      </div>
+      <div class="seg" id="mode">
+        <button type="button" data-v="abs">Downloads per day</button>
+        <button type="button" data-v="share">Share</button>
+      </div>
+      <div class="tools" data-fig="era"></div>
+    </div>
+    <svg id="era" class="plot" height="340" role="img"
+         aria-label="Stacked area chart of downloads per day of each category per month since 2016."></svg>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>Rising and fading</h2>
+        <p class="note" id="growth-note"></p>
+      </div>
+      <div class="tools" data-fig="growth"></div>
+    </div>
+    <div class="growth">
+      <svg id="growth" class="plot" height="420" role="img"
+           aria-label="Scatter plot of each package's downloads per day over the last 12 months against its change from the 12 months before."></svg>
+      <aside>
+        <h3>Newcomers</h3>
+        <p class="note">Under 10 downloads a day in the 12 months before last, at least 10 now.</p>
+        <ol class="mini-list" id="newcomers"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <div class="split even">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>How fast packages took off</h2>
+          <p class="note" id="adopt-note"></p>
+        </div>
+        <div class="tools" data-fig="adopt"></div>
+      </div>
+      <svg id="adopt" class="plot" height="336" role="img"
+           aria-label="Downloads per day of the top packages against months since their first release."></svg>
+    </section>
     <section class="card">
       <div class="card-head">
         <div>
@@ -368,6 +469,33 @@ footer a { color: inherit; }
         </div>
       </div>
       <div id="race"></div>
+    </section>
+
+  </div>
+
+  <div class="split">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Built on top</h2>
+          <p class="note" id="deps-note"></p>
+        </div>
+        <div class="tools" data-fig="deps"></div>
+      </div>
+      <div class="table-wrap">
+        <table class="deps">
+          <thead>
+            <tr>
+              <th>Package</th>
+              <th class="num">Own</th>
+              <th class="num">Dependents</th>
+              <th class="num" title="Dependents' downloads divided by the package's own">Ratio</th>
+              <th>Dependents, most downloaded first</th>
+            </tr>
+          </thead>
+          <tbody id="deps"></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="card">
@@ -384,9 +512,10 @@ footer a { color: inherit; }
   <section class="card">
     <div class="card-head">
       <div>
-        <h2>All packages</h2>
+        <h2>Ranking</h2>
         <p class="note">Downloads in the chosen period. Click a column to sort; hover a row to highlight that package in the chart.</p>
       </div>
+      <div class="tools" data-fig="table"></div>
     </div>
     <div class="table-wrap">
       <table>
@@ -409,6 +538,7 @@ footer a { color: inherit; }
         <tbody id="rows"></tbody>
       </table>
     </div>
+    <div class="more-row"><button type="button" class="more-btn" id="more"></button></div>
   </section>
 
   <section class="card" id="about">
@@ -439,6 +569,16 @@ footer a { color: inherit; }
         <p>Automated installs run almost entirely on Linux, so "macOS + Windows" leaves them out; it also leaves out real use on Linux workstations and clusters, and is therefore a floor on interactive use, not an estimate of it.
           Installs from outside PyPI, such as conda-forge, are not counted.</p>
       </div>
+      <div>
+        <h3>Using the figures</h3>
+        <p>Each chart downloads as PNG or SVG, drawn in light colours with its title, the filters in use and the data source, ready for a slide; CSV gives the numbers behind it.
+          The address bar keeps the current view, so a link reproduces it.</p>
+        <p>The package list is today's: packages that were popular once and are no longer listed are missing from the early years, and PyPI as a whole has also grown, so compare packages and fields with each other rather than reading the totals as the absolute size of the field.</p>
+      </div>
+      <div>
+        <h3>How to cite</h3>
+        <p id="cite"></p>
+      </div>
     </div>
   </section>
   <footer>
@@ -449,6 +589,7 @@ footer a { color: inherit; }
   </footer>
 </main>
 
+<div class="tip" id="tip"></div>
 <script src="data.js"></script>
 <script>
 const D = window.PYPI_DATA;
@@ -466,7 +607,11 @@ const RACE_ROW_H = 28;
 const RACE_STEP_MS = 150;
 const OS = ["all", "linux", "desktop"];
 const PLAY_ICON = '<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z"/></svg>';
-const PAUSE_ICON = '<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/></svg>';
+const DOWNLOAD_ICON = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 1.5v6M3.5 5 6 7.5 8.5 5M2 10.5h8"/></svg>';
+const TABLE_ROWS = 20;
+const ADOPT_N = 12;
+const SITE = "lan496.github.io/pypi-atomistic-usage";
+const PAUSE_ICON ='<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/></svg>';
 
 // days of each month covered by the data; the last month may be partial
 const MONTH_DAYS = D.months.map((m) => {
@@ -490,10 +635,13 @@ const PK = D.packages.map((p) => ({
 // the first month with any download, where "All years" starts
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
-const state = {
-  days: 90, os: "all", cat: "", lines: 25, scale: "log", q: "",
-  sort: "total", desc: true, hl: null, cursor: null,
-};
+const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "" };
+const state = { ...DEFAULTS, sort: "total", desc: true, all: false, hl: null, cursor: null };
+// colour of each package in the current view; see assignColors()
+let colors = new Map();
+// the numbers behind each figure, for CSV export
+const figData = {};
+const tip = document.getElementById("tip");
 const chart = document.getElementById("chart");
 const tooltip = document.getElementById("tooltip");
 // what the current chart shows: packages, their paths, and the scales
@@ -517,14 +665,31 @@ function init() {
   document.getElementById("bulk-head").title =
     `Share of downloads of the last ${D.automation_days} days from one environment downloading one version at least ${full(D.bulk_min)} times a day`;
 
+  document.getElementById("cite").textContent =
+    `Atomistic PyPI usage, ${location.origin}${location.pathname} (data fetched ${D.fetched} from ClickPy). Source code: https://github.com/lan496/pypi-atomistic-usage.`;
+
+  readHash();
   const q = document.getElementById("q");
+  q.value = state.q;
   q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); renderAll(); });
 
   bindSeg("days", Number);
   bindSeg("os", String);
   bindSeg("lines", Number);
   bindSeg("scale", String);
+  bindSeg("mode", String);
   renderChips();
+
+  document.getElementById("more").addEventListener("click", () => { state.all = !state.all; renderTable(); });
+  for (const box of document.querySelectorAll(".tools")) {
+    const kinds = ["table", "deps"].includes(box.dataset.fig) ? ["csv"] : ["png", "svg", "csv"];
+    for (const kind of kinds) {
+      const b = el("button", { type: "button", title: `Download as ${kind.toUpperCase()}` });
+      b.innerHTML = `${DOWNLOAD_ICON}${kind.toUpperCase()}`;
+      b.addEventListener("click", () => exportFig(box.dataset.fig, kind));
+      box.append(b);
+    }
+  }
 
   for (const th of document.querySelectorAll("th[data-sort]")) {
     th.addEventListener("click", () => {
@@ -539,7 +704,7 @@ function init() {
   chart.addEventListener("pointerleave", clearHover);
   chart.addEventListener("keydown", onKey);
   chart.addEventListener("blur", clearHover);
-  window.addEventListener("resize", renderChart);
+  window.addEventListener("resize", renderPlots);
 
   // a hairline under the toolbar once it sticks to the top
   const toolbar = document.getElementById("toolbar");
@@ -556,12 +721,58 @@ function init() {
 function renderAll() {
   state.hl = null;
   state.cursor = null;
+  assignColors();
+  writeHash();
   syncChips();
   renderStats();
-  renderChart();
+  renderPlots();
   renderRace();
   renderShare();
+  renderDeps();
   renderTable();
+}
+
+// the SVG charts, which are redrawn on resize
+function renderPlots() {
+  renderChart();
+  renderEra();
+  renderGrowth();
+  renderAdopt();
+}
+
+// Category colours, or one colour per package when the shown packages share one category.
+function assignColors() {
+  const rows = visible();
+  const single = new Set(rows.map((r) => r.p.category)).size <= 1;
+  colors = new Map(rows.map((r, k) => [r.p, single ? `var(--c${(k % 8) + 1})` : r.p.color]));
+}
+
+function colorOf(p) {
+  return colors.get(p) ?? p.color;
+}
+
+// The view lives in the address bar, so a link reproduces it; defaults are left out.
+function readHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const pick = (key, ok, parse = String) => {
+    if (h.has(key) && ok.includes(parse(h.get(key)))) state[key] = parse(h.get(key));
+  };
+  pick("days", [30, 90, 180, 0], Number);
+  pick("os", OS);
+  pick("lines", [10, 25, 0], Number);
+  pick("scale", ["log", "linear"]);
+  pick("mode", ["abs", "share"]);
+  pick("cat", D.categories);
+  if (h.has("q")) state.q = h.get("q").toLowerCase();
+}
+
+function writeHash() {
+  const h = new URLSearchParams();
+  for (const [key, value] of Object.entries(DEFAULTS)) {
+    if (state[key] !== value) h.set(key, state[key]);
+  }
+  const hash = h.toString();
+  history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
 }
 
 function setCat(c) {
@@ -666,10 +877,14 @@ function renderStats() {
   const from = Math.max(ax.start, ax.first);
   const summed = [];
   for (let i = from; i < ax.n; i++) summed.push(rows.reduce((s, r) => s + (ax.values(r.p)[i] ?? 0), 0));
+  const now12 = rows.reduce((s, r) => s + perDay(r.p, NM - 12, NM), 0);
+  const prev12 = rows.reduce((s, r) => s + perDay(r.p, NM - 24, NM - 12), 0);
   const box = document.getElementById("stats");
   box.replaceChildren(
-    stat("Downloads", compact(total), `${periodName()}, ${platformName()}`, sparkline(summed, "var(--c1)", true)),
-    stat("Packages shown", full(rows.length), state.cat || (state.q ? `matching "${state.q}"` : "all categories")),
+    stat("Downloads", compact(total), `${rows.length} packages, ${periodName()}, ${platformName()}`,
+      sparkline(summed, "var(--c1)", true)),
+    stat("Change over a year", now12 && prev12 ? pct(now12 / prev12 - 1, true) : "-",
+      `per day, last 12 mo. vs. prior 12: ${compact(prev12)} to ${compact(now12)}`),
     stat("Most downloaded", rows[0] ? rows[0].p.name : "-", rows[0] ? `${compact(rows[0].perDay)} per day` : ""),
     stat("Fastest growing", riser ? riser.p.name : "-",
       riser ? `${pct(riser.change, true)} ${state.days ? "vs. preceding period" : "last 12 mo. vs. prior 12"}` : ""),
@@ -690,8 +905,18 @@ function renderChart() {
   const ax = axis();
   document.getElementById("chart-title").textContent = state.days
     ? "Downloads per day, 7-day rolling mean" : "Downloads per day, monthly mean";
+  document.getElementById("chart-note").textContent =
+    `${state.lines ? `Top ${state.lines}` : "All"} packages by downloads in the ${periodName()}; `
+    + `${state.cat || "all categories"}${state.q ? `, matching "${state.q}"` : ""}, ${platformName()}, ${state.scale} scale.`;
   const ranked = visible().map((r) => r.p);
   const pk = state.lines ? ranked.slice(0, state.lines) : ranked;
+  figData.chart = {
+    header: [state.days ? "date" : "month", ...pk.map((p) => p.name)],
+    rows: ax.labels.slice(Math.max(ax.start, ax.first)).map((label, k) => {
+      const i = Math.max(ax.start, ax.first) + k;
+      return [label, ...pk.map((p) => (ax.values(p)[i] === null ? "" : ax.values(p)[i].toFixed(1)))];
+    }),
+  };
   const W = chart.clientWidth;
   const H = Number(chart.getAttribute("height"));
   M.right = W < 640 ? 110 : 190;
@@ -721,7 +946,7 @@ function renderChart() {
     const path = svg("path", {
       d: linePath(ax.values(p), ax.start, x, y),
       fill: "none",
-      stroke: p.color,
+      stroke: colorOf(p),
       "stroke-width": 1.75,
       "stroke-linejoin": "round",
       "stroke-linecap": "round",
@@ -734,7 +959,7 @@ function renderChart() {
     // dotted, so that a label pushed far from its line end is not read as a drop
     chart.append(svg("line", {
       x1: W - M.right + 2, y1: y(ax.values(label.p)[ax.n - 1]), x2: W - M.right + 10, y2: label.y,
-      stroke: label.p.color, opacity: 0.5, "stroke-dasharray": "1 2",
+      stroke: colorOf(label.p), opacity: 0.5, "stroke-dasharray": "1 2",
     }));
     label.text = svg("text", { x: W - M.right + 14, y: label.y + 4, class: "end-label" }, label.p.name);
     chart.append(label.text);
@@ -775,7 +1000,7 @@ function renderHover() {
   hover.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)", "stroke-dasharray": "3 3" }));
   if (hl && ax.values(hl)[state.cursor] !== null) {
     hover.append(svg("circle", {
-      cx, cy: y(ax.values(hl)[state.cursor]), r: 5, fill: hl.color,
+      cx, cy: y(ax.values(hl)[state.cursor]), r: 5, fill: colorOf(hl),
       stroke: "var(--surface)", "stroke-width": 2,
     }));
   }
@@ -807,7 +1032,7 @@ function renderTooltip(cx) {
   list.style.setProperty("--rows", Math.ceil(rows.length / (rows.length > 10 ? 2 : 1)));
   for (const p of rows) {
     const key = el("i", { class: "key" });
-    key.style.background = p.color;
+    key.style.background = colorOf(p);
     list.append(el("div", { class: p.name === state.hl ? "row hl" : "row" },
       key, el("b", {}, full(ax.values(p)[i])), icon(p), p.name));
   }
@@ -892,7 +1117,7 @@ function renderRace() {
   race.rows = new Map();
   for (const { p } of visible()) {
     const fill = el("div", { class: "race-fill" });
-    fill.style.background = p.color;
+    fill.style.background = colorOf(p);
     const value = el("span", { class: "race-value" });
     const row = el("div", { class: "race-row" },
       el("div", { class: "race-name" }, icon(p), p.name),
@@ -974,6 +1199,407 @@ function renderShare() {
   document.getElementById("share").replaceChildren(bar, list);
 }
 
+// ---- the field over time ----
+
+// Stacked downloads per day of each category per month, or each category's share of them.
+function renderEra() {
+  const plot = document.getElementById("era");
+  const rows = visible(false).map((r) => r.p);
+  const share = state.mode === "share";
+  const raw = D.categories.map((c) => {
+    const ps = rows.filter((p) => p.category === c);
+    return D.months.map((_, i) => ps.reduce((s, p) => s + (p.monthly[state.os][i] ?? 0), 0));
+  });
+  // 3-month trailing mean against month-to-month noise
+  const smooth = raw.map((s) => s.map((_, i) => {
+    const a = Math.max(0, i - 2);
+    return sum(s, a, i + 1) / (i + 1 - a);
+  }));
+  const tot = D.months.map((_, i) => smooth.reduce((s, c) => s + c[i], 0));
+  const value = (k, i) => (share ? (tot[i] ? smooth[k][i] / tot[i] : 0) : smooth[k][i]);
+  figData.era = {
+    header: ["month", ...D.categories],
+    rows: D.months.slice(FIRST_MONTH).map((month, k) => [month, ...raw.map((s) => s[FIRST_MONTH + k].toFixed(1))]),
+  };
+
+  // headline: the last complete calendar year against five years before
+  const lastYear = Number(D.dates[N - 1].slice(0, 4)) - (D.dates[N - 1].endsWith("-12-31") ? 0 : 1);
+  const baseYear = Math.max(lastYear - 5, Number(D.months[FIRST_MONTH].slice(0, 4)) + 1);
+  const inScope = rows.filter((p) => !state.cat || p.category === state.cat);
+  const yearPerDay = (y) => {
+    const from = D.months.indexOf(`${y}-01`);
+    return from < 0 ? 0 : inScope.reduce((s, p) => s + perDay(p, from, from + 12), 0);
+  };
+  const [a, b] = [yearPerDay(baseYear), yearPerDay(lastYear)];
+  const scope = `${state.cat || "all categories"}${state.q ? `, matching "${state.q}"` : ""}, ${platformName()}`;
+  const headline = document.getElementById("era-headline");
+  headline.replaceChildren(a > 0
+    ? `${compact(b)} downloads a day in ${lastYear}, ${(b / a).toFixed(1)}x the ${compact(a)} of ${baseYear}`
+    : `${compact(b)} downloads a day in ${lastYear}`);
+  document.getElementById("era-note").textContent = `${share ? "Share of downloads" : "Downloads per day"} of each category, 3-month mean; ${scope}.`;
+
+  const { W, H, m, pw, ph } = frame(plot, { left: 52, right: 12, top: 10, bottom: 26 });
+  const span = Math.max(1, NM - 1 - FIRST_MONTH);
+  const x = (i) => m.left + ((i - FIRST_MONTH) / span) * pw;
+  const scale = share ? { ticks: [0, 0.25, 0.5, 0.75, 1], t: (v) => v } : linearAxis(tot.slice(FIRST_MONTH));
+  const y = (v) => m.top + ph - scale.t(v) * ph;
+  grid(plot, scale.ticks, y, m.left, W - m.right, share ? (v) => `${v * 100}%` : compact);
+  for (let i = FIRST_MONTH; i < NM; i++) {
+    const year = Number(D.months[i].slice(0, 4));
+    if (D.months[i].endsWith("-01") && (W >= 640 || year % 2 === 0)) {
+      plot.append(svg("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, String(year)));
+    }
+  }
+  let lower = D.months.map(() => 0);
+  const bands = D.categories.map((c, k) => {
+    const upper = lower.map((v, i) => v + value(k, i));
+    let d = "";
+    for (let i = FIRST_MONTH; i < NM; i++) d += `${i === FIRST_MONTH ? "M" : "L"}${x(i).toFixed(1)},${y(upper[i]).toFixed(1)}`;
+    for (let i = NM - 1; i >= FIRST_MONTH; i--) d += `L${x(i).toFixed(1)},${y(lower[i]).toFixed(1)}`;
+    const path = svg("path", { d: `${d}Z`, fill: catColor(c), opacity: state.cat && state.cat !== c ? 0.2 : 0.9, cursor: "pointer" });
+    path.addEventListener("click", () => setCat(c));
+    plot.append(path);
+    const band = { c, k, lower, upper };
+    lower = upper;
+    return band;
+  });
+  const hover = svg("g");
+  plot.append(hover);
+  plot.onpointermove = (ev) => {
+    const box = plot.getBoundingClientRect();
+    const [px, py] = [ev.clientX - box.left, ev.clientY - box.top];
+    const i = FIRST_MONTH + Math.round(Math.min(1, Math.max(0, (px - m.left) / pw)) * span);
+    const under = bands.find((band) => py <= y(band.lower[i]) && py >= y(band.upper[i]));
+    hover.replaceChildren(svg("line", {
+      x1: x(i), x2: x(i), y1: m.top, y2: m.top + ph, stroke: "var(--text-muted)", "stroke-dasharray": "3 3",
+    }));
+    const items = bands.filter((band) => smooth[band.k][i] > 0).sort((p, q) => smooth[q.k][i] - smooth[p.k][i]);
+    showTip(ev,
+      el("div", { class: "t" }, `${D.months[i]}: ${compact(tot[i])} a day`),
+      ...items.map((band) => tipRow(catColor(band.c), band.c,
+        `${compact(smooth[band.k][i])} (${((100 * smooth[band.k][i]) / tot[i]).toFixed(0)}%)`, under === band)));
+  };
+  plot.onpointerleave = () => { hover.replaceChildren(); hideTip(); };
+}
+
+// ---- rising and fading ----
+
+// Size against growth: downloads per day over the last 12 months and the change from the 12 before.
+function renderGrowth() {
+  const plot = document.getElementById("growth");
+  const pts = [];
+  const fresh = [];
+  for (const { p } of visible()) {
+    const now = perDay(p, NM - 12, NM);
+    const before = perDay(p, NM - 24, NM - 12);
+    if (now < 10) continue;
+    if (before < 10) fresh.push({ p, now, before });
+    else pts.push({ p, now, before, r: Math.log2(now / before) });
+  }
+  figData.growth = {
+    header: ["package", "category", "per_day_last_12_months", "per_day_prior_12_months", "ratio"],
+    rows: [...pts, ...fresh].map((d) => [d.p.name, d.p.category, d.now.toFixed(1), d.before.toFixed(1),
+      d.before > 0 ? (d.now / d.before).toFixed(3) : ""]),
+  };
+  document.getElementById("growth-note").textContent =
+    `Each dot is a package with at least 10 downloads a day over the last 12 months (${platformName()}). `
+    + "Further right means more downloads; higher means more growth against the 12 months before.";
+
+  const { W, H, m, pw, ph } = frame(plot, { left: 56, right: 16, top: 12, bottom: 44 });
+  const logs = pts.map((d) => Math.log10(d.now));
+  const lo = Math.floor(Math.min(...logs, 1));
+  const hi = Math.max(lo + 1, Math.ceil(Math.max(...logs, 2)));
+  const lim = Math.min(4, Math.max(1, Math.ceil(Math.max(...pts.map((d) => Math.abs(d.r)), 0))));
+  const x = (v) => m.left + ((Math.log10(v) - lo) / (hi - lo)) * pw;
+  const y = (r) => m.top + ph / 2 - (Math.max(-lim, Math.min(lim, r)) / lim) * (ph / 2);
+  plot.append(svg("rect", { x: m.left, y: m.top, width: pw, height: ph / 2, fill: "var(--up)", opacity: 0.05 }));
+  plot.append(svg("rect", { x: m.left, y: m.top + ph / 2, width: pw, height: ph / 2, fill: "var(--down)", opacity: 0.05 }));
+  for (let k = -lim; k <= lim; k++) {
+    plot.append(svg("line", { x1: m.left, x2: W - m.right, y1: y(k), y2: y(k), stroke: k ? "var(--grid)" : "var(--axis)" }));
+    plot.append(svg("text", { x: m.left - 8, y: y(k) + 4, "text-anchor": "end" }, k >= 0 ? `${2 ** k}x` : `1/${2 ** -k}`));
+  }
+  for (let e = lo; e <= hi; e++) {
+    plot.append(svg("line", { x1: x(10 ** e), x2: x(10 ** e), y1: m.top, y2: m.top + ph, stroke: "var(--grid)" }));
+    plot.append(svg("text", { x: x(10 ** e), y: m.top + ph + 16, "text-anchor": "middle" }, compact(10 ** e)));
+  }
+  plot.append(svg("text", { x: m.left + pw / 2, y: H - 4, "text-anchor": "middle", class: "axis-title" },
+    "Downloads per day, last 12 months"));
+  plot.append(svg("text", {
+    x: 12, y: m.top + ph / 2, "text-anchor": "middle", class: "axis-title",
+    transform: `rotate(-90 12 ${m.top + ph / 2})`,
+  }, "Change from the 12 months before"));
+
+  for (const d of [...pts].sort((p, q) => q.now - p.now)) {
+    plot.append(svg("circle", {
+      cx: x(d.now), cy: y(d.r), r: 4.5, fill: colorOf(d.p), stroke: "var(--surface)", "stroke-width": 1, opacity: 0.9,
+    }));
+  }
+  // names for the biggest, the fastest risers and the steepest fallers, where they fit
+  const big = [...pts].sort((p, q) => q.now - p.now).slice(0, 8);
+  const sizeable = pts.filter((d) => d.now >= 100).sort((p, q) => q.r - p.r);
+  const boxes = [];
+  for (const d of new Set([...big, ...sizeable.slice(0, 5), ...sizeable.slice(-5)])) {
+    const w = d.p.name.length * 6.3;
+    const [cx, cy] = [x(d.now), y(d.r)];
+    for (const lx of [cx + 7, cx - 7 - w]) {
+      const b = { x1: lx, x2: lx + w, y1: cy - 7, y2: cy + 5 };
+      const inside = b.x1 >= m.left && b.x2 <= W - m.right && b.y1 >= m.top && b.y2 <= m.top + ph;
+      if (!inside || boxes.some((o) => b.x1 < o.x2 && o.x1 < b.x2 && b.y1 < o.y2 && o.y1 < b.y2)) continue;
+      boxes.push(b);
+      plot.append(svg("text", { x: lx, y: cy + 4, class: "lbl" }, d.p.name));
+      break;
+    }
+  }
+  const hover = svg("g");
+  plot.append(hover);
+  plot.onpointermove = (ev) => {
+    const box = plot.getBoundingClientRect();
+    const [px, py] = [ev.clientX - box.left, ev.clientY - box.top];
+    let best = null;
+    let bestDist = 18;
+    for (const d of pts) {
+      const dist = Math.hypot(x(d.now) - px, y(d.r) - py);
+      if (dist < bestDist) { best = d; bestDist = dist; }
+    }
+    hover.replaceChildren();
+    if (!best) { hideTip(); return; }
+    hover.append(svg("circle", { cx: x(best.now), cy: y(best.r), r: 7, fill: "none", stroke: "var(--text-primary)", "stroke-width": 1.5 }));
+    showTip(ev,
+      el("div", { class: "t" }, best.p.name),
+      el("div", { class: "m" }, best.p.category),
+      el("div", {}, `${compact(best.before)} to ${compact(best.now)} downloads a day (${pct(best.now / best.before - 1, true)})`));
+  };
+  plot.onpointerleave = () => { hover.replaceChildren(); hideTip(); };
+
+  const list = document.getElementById("newcomers");
+  list.replaceChildren();
+  for (const d of fresh.sort((p, q) => q.now - p.now).slice(0, 12)) {
+    list.append(el("li", { title: d.p.category },
+      icon(d.p), el("span", { class: "name" }, d.p.name),
+      el("span", { class: "y" }, d.p.since ? d.p.since.slice(0, 4) : ""),
+      el("span", { class: "v" }, `${compact(d.now)}/day`)));
+  }
+  if (!fresh.length) list.append(el("li", { class: "y" }, "None among the packages shown."));
+}
+
+// ---- how fast packages took off ----
+
+// Downloads per day against months since the first release, for the top packages of the view.
+function renderAdopt() {
+  const plot = document.getElementById("adopt");
+  const series = visible().slice(0, ADOPT_N).map(({ p }) => {
+    const born = p.since ? monthIndex(p.since.slice(0, 7))
+      : monthIndex(D.months[Math.max(0, p.monthly.all.findIndex((v) => v > 0))]);
+    const pts = [];
+    p.monthly[state.os].forEach((v, i) => {
+      const age = monthIndex(D.months[i]) - born;
+      if (v !== null && v > 0 && age >= 0) pts.push({ age, v, i });
+    });
+    return { p, pts };
+  }).filter((s) => s.pts.length);
+  figData.adopt = {
+    header: ["package", "months_since_first_release", "month", "per_day"],
+    rows: series.flatMap((s) => s.pts.map((d) => [s.p.name, d.age, D.months[d.i], d.v.toFixed(1)])),
+  };
+  document.getElementById("adopt-note").textContent =
+    `Mean downloads per day of the top ${series.length} packages of the period, by months since their first PyPI release (${platformName()}). `
+    + "Packages released before 2016 start partway along.";
+
+  const { W, H, m, pw, ph } = frame(plot, { left: 48, right: 124, top: 10, bottom: 26 });
+  const maxAge = Math.max(12, ...series.flatMap((s) => s.pts.map((d) => d.age)));
+  const scale = logAxis(series.flatMap((s) => s.pts.map((d) => d.v)));
+  const x = (age) => m.left + (age / maxAge) * pw;
+  const y = (v) => m.top + ph - scale.t(v) * ph;
+  grid(plot, scale.ticks, y, m.left, W - m.right, compact);
+  const step = maxAge > 96 ? 24 : 12;
+  for (let age = 0; age <= maxAge; age += step) {
+    plot.append(svg("text", { x: x(age), y: H - 8, "text-anchor": "middle" }, age ? `${age / 12} yr` : "release"));
+  }
+  const paths = series.map((s) => {
+    const d = s.pts.map((pt, k) => `${k ? "L" : "M"}${x(pt.age).toFixed(1)},${y(pt.v).toFixed(1)}`).join("");
+    const path = svg("path", { d, fill: "none", stroke: colorOf(s.p), "stroke-width": 1.75, "stroke-linejoin": "round" });
+    plot.append(path);
+    return path;
+  });
+  const labels = series.map((s) => ({ s, y: y(s.pts.at(-1).v), x: x(s.pts.at(-1).age) })).sort((p, q) => p.y - q.y);
+  spread(labels, m.top, m.top + ph);
+  for (const l of labels) {
+    // dotted from the line end to its name in the margin
+    plot.append(svg("path", {
+      d: `M${l.x + 3},${y(l.s.pts.at(-1).v)}L${W - m.right + 2},${l.y}`,
+      stroke: colorOf(l.s.p), opacity: 0.5, "stroke-dasharray": "1 2", fill: "none",
+    }));
+    plot.append(svg("text", { x: W - m.right + 6, y: l.y + 4, class: "lbl" }, l.s.p.name));
+  }
+  const hover = svg("g");
+  plot.append(hover);
+  plot.onpointermove = (ev) => {
+    const box = plot.getBoundingClientRect();
+    const [px, py] = [ev.clientX - box.left, ev.clientY - box.top];
+    const age = Math.round(((px - m.left) / pw) * maxAge);
+    let best = null;
+    let bestDist = Infinity;
+    series.forEach((s, k) => {
+      const pt = s.pts.find((d) => d.age === age);
+      if (pt && Math.abs(y(pt.v) - py) < bestDist) { best = { k, pt }; bestDist = Math.abs(y(pt.v) - py); }
+    });
+    paths.forEach((path, k) => {
+      path.setAttribute("opacity", best && best.k !== k ? 0.15 : 1);
+      path.setAttribute("stroke-width", best && best.k === k ? 3 : 1.75);
+    });
+    hover.replaceChildren();
+    if (!best) { hideTip(); return; }
+    const s = series[best.k];
+    hover.append(svg("circle", { cx: x(best.pt.age), cy: y(best.pt.v), r: 4.5, fill: colorOf(s.p), stroke: "var(--surface)", "stroke-width": 2 }));
+    showTip(ev,
+      el("div", { class: "t" }, s.p.name),
+      el("div", { class: "m" }, `${best.pt.age} months after first release (${D.months[best.pt.i]})`),
+      el("div", {}, `${full(best.pt.v)} downloads a day`));
+  };
+  plot.onpointerleave = () => {
+    paths.forEach((path) => { path.setAttribute("opacity", 1); path.setAttribute("stroke-width", 1.75); });
+    hover.replaceChildren();
+    hideTip();
+  };
+}
+
+// ---- built on top ----
+
+// Downloads of the dependents found through each package, directly or through other dependents.
+function renderDeps() {
+  const tot = new Map(PK.map((p) => [p, totals(p).total]));
+  const byName = new Map(PK.map((p) => [p.name, p]));
+  const kids = new Map();
+  for (const p of PK.filter((q) => q.via)) kids.set(p.via, [...(kids.get(p.via) ?? []), p]);
+  const below = (name) => (kids.get(name) ?? []).flatMap((k) => [k, ...below(k.name)]);
+  const match = (p) => !state.q || p.name.toLowerCase().includes(state.q);
+  const rows = [...kids.keys()].map((n) => byName.get(n))
+    .filter((p) => p && (!state.cat || p.category === state.cat) && (match(p) || below(p.name).some(match)))
+    .map((p) => {
+      const ds = below(p.name).sort((a, b) => tot.get(b) - tot.get(a));
+      return { p, own: tot.get(p), down: ds.reduce((s, d) => s + tot.get(d), 0), ds };
+    })
+    .sort((a, b) => b.down - a.down);
+  figData.deps = {
+    header: ["package", "own_downloads", "dependents_downloads", "dependents"],
+    rows: rows.map((r) => [r.p.name, Math.round(r.own), Math.round(r.down), r.ds.map((d) => d.name).join(" ")]),
+  };
+  document.getElementById("deps-note").textContent =
+    `Downloads in the ${periodName()} (${platformName()}) of the packages that require each package, directly or through another dependent. `
+    + `Only the ${PK.filter((p) => p.via).length} most-downloaded dependents are tracked, so these are floors.`;
+  const body = document.getElementById("deps");
+  body.replaceChildren();
+  for (const r of rows) {
+    const names = el("td", { class: "kids" }, r.ds.slice(0, 5).map((d) => d.name).join(", "));
+    if (r.ds.length > 5) names.append(el("span", {}, ` and ${r.ds.length - 5} more`));
+    body.append(el("tr", {},
+      el("td", { class: "pkg" }, icon(r.p), el("a", { href: `https://pypi.org/project/${r.p.name}/` }, r.p.name)),
+      el("td", { class: "num" }, compact(r.own)),
+      el("td", { class: "num" }, compact(r.down)),
+      el("td", { class: "num muted" }, r.own ? `${(r.down / r.own).toFixed(2)}` : "-"),
+      names));
+  }
+  if (!rows.length) body.append(el("tr", {}, el("td", { class: "empty", colspan: 5 }, "No package with dependents matches the filters.")));
+}
+
+// ---- figure export ----
+
+// PNG and SVG carry the title, the note under it, a legend and the source; CSV carries the numbers.
+function exportFig(id, kind) {
+  const card = document.querySelector(`.tools[data-fig="${id}"]`).closest(".card");
+  const title = card.querySelector("h2").textContent;
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const name = `atomistic-pypi-${slug}-${D.fetched}`;
+  if (kind === "csv") {
+    const { header, rows } = figData[id];
+    const cell = (v) => (/[",\n]/.test(String(v)) ? `"${String(v).replaceAll('"', '""')}"` : String(v));
+    const text = `${[header, ...rows].map((r) => r.map(cell).join(",")).join("\n")}\n`;
+    download(new Blob([text], { type: "text/csv" }), `${name}.csv`);
+    return;
+  }
+  if (id === "chart") clearHover();
+  const notes = [...card.querySelectorAll(".card-head .headline, .card-head .note:not(.hint)")].map((n) => n.textContent);
+  const shown = new Set(visible().map((r) => r.p.category));
+  const legend = id === "era" ? D.categories : shown.size > 1 ? D.categories.filter((c) => shown.has(c)) : [];
+  const { node, w, h } = figureSvg(document.getElementById(id), title, notes, legend);
+  const text = new XMLSerializer().serializeToString(node);
+  if (kind === "svg") {
+    download(new Blob([text], { type: "image/svg+xml" }), `${name}.svg`);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const canvas = el("canvas", { width: w * 2, height: h * 2 });
+    const ctx = canvas.getContext("2d");
+    ctx.scale(2, 2);
+    ctx.drawImage(img, 0, 0, w, h);
+    canvas.toBlob((blob) => download(blob, `${name}.png`), "image/png");
+  };
+  img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(text)}`;
+}
+
+// A standalone copy of a chart in the light colours, framed for a slide.
+function figureSvg(src, title, notes, legend) {
+  const root = document.documentElement;
+  root.classList.add("export");
+  const cs = getComputedStyle(root);
+  const color = (v) => cs.getPropertyValue(v).trim();
+  const plot = src.cloneNode(true);
+  inlineStyles(src, plot);
+  const ink = { primary: color("--text-primary"), secondary: color("--text-secondary"), muted: color("--text-muted"), bg: color("--surface") };
+  const cats = legend.map((c) => [c, color(`--c${D.categories.indexOf(c) + 1}`)]);
+  root.classList.remove("export");
+
+  const font = getComputedStyle(document.body).fontFamily;
+  const W = src.clientWidth;
+  const H = Number(src.getAttribute("height"));
+  const pad = 24;
+  const node = svg("svg", { xmlns: SVG_NS, "font-family": font });
+  const parts = [];
+  let y = pad + 18;
+  parts.push(svg("text", { x: pad, y, "font-size": 18, "font-weight": 650, fill: ink.primary }, title));
+  for (const line of notes.flatMap((n) => wrap(n, Math.floor(W / 6.4)))) {
+    y += 17;
+    parts.push(svg("text", { x: pad, y, "font-size": 12, fill: ink.secondary }, line));
+  }
+  let lx = pad;
+  y += cats.length ? 22 : 4;
+  for (const [c, fill] of cats) {
+    const w = 18 + c.length * 6.4;
+    if (lx + w > pad + W) { lx = pad; y += 17; }
+    parts.push(svg("circle", { cx: lx + 4, cy: y - 4, r: 4, fill }));
+    parts.push(svg("text", { x: lx + 12, y, "font-size": 11, fill: ink.secondary }, c));
+    lx += w + 10;
+  }
+  y += 12;
+  plot.removeAttribute("id");
+  plot.removeAttribute("tabindex");
+  for (const [k, v] of Object.entries({ x: pad, y, width: W, height: H })) plot.setAttribute(k, v);
+  const footY = y + H + 22;
+  parts.push(plot, svg("text", { x: pad, y: footY, "font-size": 11, fill: ink.muted },
+    `Data: PyPI downloads via ClickPy, fetched ${D.fetched}. ${SITE}`));
+  const w = W + 2 * pad;
+  const h = footY + pad - 8;
+  for (const [k, v] of Object.entries({ width: w, height: h, viewBox: `0 0 ${w} ${h}` })) node.setAttribute(k, v);
+  node.append(svg("rect", { width: w, height: h, fill: ink.bg }), ...parts);
+  return { node, w, h };
+}
+
+// Copies the computed paint and type of each element onto its clone, resolving the CSS variables.
+function inlineStyles(src, dst) {
+  const cs = getComputedStyle(src);
+  for (const prop of ["fill", "stroke", "stroke-width", "stroke-dasharray", "opacity", "font-size", "font-weight"]) {
+    dst.style.setProperty(prop, cs.getPropertyValue(prop));
+  }
+  [...src.children].forEach((child, k) => inlineStyles(child, dst.children[k]));
+}
+
+function download(blob, name) {
+  const a = el("a", { href: URL.createObjectURL(blob), download: name });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 // ---- table ----
 
 function renderTable() {
@@ -999,17 +1625,27 @@ function renderTable() {
     return state.desc ? -order : order;
   });
 
+  figData.table = {
+    header: ["rank", "package", "category", "found_via", "first_release", "downloads", "per_day", "change", "ci_share", "bulk_share"],
+    rows: rows.map((r) => [rank.get(r.p), r.p.name, r.p.category, r.p.via ?? "", r.p.since ?? "",
+      Math.round(r.total), Math.round(r.perDay), r.change === null ? "" : r.change.toFixed(4),
+      r.p.ci ?? "", r.p.bulk ?? ""]),
+  };
+
   const body = document.getElementById("rows");
   body.replaceChildren();
+  const more = document.getElementById("more");
+  more.parentElement.hidden = rows.length <= TABLE_ROWS;
+  more.textContent = state.all ? `Show top ${TABLE_ROWS}` : `Show all ${rows.length} packages`;
   if (!rows.length) {
     body.append(el("tr", {}, el("td", { class: "empty", colspan: 12 }, "No package matches the filters.")));
     return;
   }
-  for (const { p, total, perDay, change } of rows) {
+  for (const { p, total, perDay, change } of state.all ? rows : rows.slice(0, TABLE_ROWS)) {
     const link = el("a", { href: `https://pypi.org/project/${p.name}/` }, p.name);
     const fill = el("div", { class: "bar-fill" });
     fill.style.width = `${(total / max) * 100}%`;
-    fill.style.background = p.color;
+    fill.style.background = colorOf(p);
     const dot = el("i", { class: "dot" });
     dot.style.background = p.color;
     const delta = el("td", { class: "num" }, "-");
@@ -1029,7 +1665,7 @@ function renderTable() {
       delta,
       el("td", { class: "num muted" }, p.ci === null ? "-" : pct(p.ci)),
       el("td", { class: "num muted" }, p.bulk === null ? "-" : pct(p.bulk)),
-      el("td", {}, sparkline(ax.values(p).slice(Math.max(ax.start, ax.first)), p.color)));
+      el("td", {}, sparkline(ax.values(p).slice(Math.max(ax.start, ax.first)), colorOf(p))));
     tr.addEventListener("pointerenter", () => {
       if (!view.paths.has(p.name)) return;
       state.hl = p.name;
@@ -1073,6 +1709,81 @@ function icon(p) {
 }
 
 // ---- helpers ----
+
+function monthIndex(month) {
+  const [y, m] = month.split("-").map(Number);
+  return y * 12 + m - 1;
+}
+
+// Mean downloads per day of a package over the months [from, to).
+function perDay(p, from, to) {
+  const s = p.monthly[state.os];
+  let total = 0;
+  let days = 0;
+  for (let i = Math.max(0, from); i < to; i++) {
+    total += (s[i] ?? 0) * MONTH_DAYS[i];
+    days += MONTH_DAYS[i];
+  }
+  return days ? total / days : 0;
+}
+
+// Clears an SVG plot and sizes it to its box.
+function frame(plot, m) {
+  const W = plot.clientWidth;
+  const H = Number(plot.getAttribute("height"));
+  plot.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  plot.replaceChildren();
+  return { W, H, m, pw: W - m.left - m.right, ph: H - m.top - m.bottom };
+}
+
+function grid(plot, ticks, y, x1, x2, format) {
+  for (const t of ticks) {
+    plot.append(svg("line", { x1, x2, y1: y(t), y2: y(t), stroke: "var(--grid)" }));
+    plot.append(svg("text", { x: x1 - 8, y: y(t) + 4, "text-anchor": "end" }, format(t)));
+  }
+}
+
+// Pushes labels sorted by y apart so that they do not overlap, keeping them within [top, bottom].
+function spread(labels, top, bottom) {
+  for (let k = 1; k < labels.length; k++) labels[k].y = Math.max(labels[k].y, labels[k - 1].y + LABEL_GAP);
+  for (let k = labels.length - 1; k >= 0; k--) {
+    labels[k].y = Math.min(labels[k].y, k === labels.length - 1 ? bottom : labels[k + 1].y - LABEL_GAP);
+  }
+  if (labels.length) labels[0].y = Math.max(labels[0].y, top);
+}
+
+function tipRow(color, name, value, hl = false) {
+  const key = el("i", { class: "key" });
+  key.style.background = color;
+  return el("div", { class: hl ? "row hl" : "row" }, key, name, el("b", {}, value));
+}
+
+// The floating tooltip of the analysis plots, kept inside the window.
+function showTip(ev, ...children) {
+  tip.replaceChildren(...children);
+  tip.style.display = "block";
+  const [w, h] = [tip.offsetWidth, tip.offsetHeight];
+  const x = ev.clientX + 14 + w > innerWidth - 8 ? ev.clientX - 14 - w : ev.clientX + 14;
+  const y = ev.clientY + 14 + h > innerHeight - 8 ? ev.clientY - 14 - h : ev.clientY + 14;
+  tip.style.left = `${Math.max(8, x)}px`;
+  tip.style.top = `${Math.max(8, y)}px`;
+}
+
+function hideTip() {
+  tip.style.display = "none";
+}
+
+// Splits text into lines of at most `width` characters at spaces.
+function wrap(text, width) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    if (line && line.length + word.length + 1 > width) { lines.push(line); line = word; }
+    else line = line ? `${line} ${word}` : word;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
 
 // 7-day mean ending on each day; null until a full window exists
 function rolling(values) {
