@@ -12,15 +12,17 @@
 <style>
 :root {
   color-scheme: light;
-  --page: #f9f9f7;
-  --surface: #fcfcfb;
+  --page: #f4f4f1;
+  --surface: #ffffff;
+  --raised: #fafaf8;
   --text-primary: #0b0b0b;
   --text-secondary: #52514e;
   --text-muted: #898781;
-  --grid: #e1e0d9;
+  --grid: #ebeae4;
   --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.10);
-  --wash: rgba(11, 11, 11, 0.05);
+  --border: rgba(11, 11, 11, 0.09);
+  --wash: rgba(11, 11, 11, 0.045);
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 4px 16px rgba(11, 11, 11, 0.04);
   --up: #006300;
   --down: #d03b3b;
   --c1: #2a78d6;
@@ -31,19 +33,22 @@
   --c6: #008300;
   --c7: #6250d6;
   --c8: #e34948;
+  --radius: 12px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
     --page: #0d0d0d;
-    --surface: #1a1a19;
+    --surface: #171716;
+    --raised: #1d1d1c;
     --text-primary: #f0efec;
     --text-secondary: #c3c2b7;
     --text-muted: #898781;
-    --grid: #2c2c2a;
-    --axis: #383835;
-    --border: rgba(255, 255, 255, 0.10);
+    --grid: #262624;
+    --axis: #3a3a37;
+    --border: rgba(255, 255, 255, 0.09);
     --wash: rgba(255, 255, 255, 0.06);
+    --shadow: none;
     --up: #0ca30c;
     --down: #e66767;
     --c1: #3987e5;
@@ -59,211 +64,335 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  padding: 24px;
   background: var(--page);
   color: var(--text-primary);
   font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-main { max-width: 1180px; margin: 0 auto; }
-a { color: var(--c1); }
-header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-start; margin-bottom: 16px; }
-header .intro { flex: 1 1 560px; }
-header nav { display: flex; gap: 8px; }
-header nav a {
-  color: var(--text-primary); text-decoration: none; background: var(--surface);
-  border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px;
+main { max-width: 1240px; margin: 0 auto; padding: 0 24px 32px; }
+a { color: var(--c1); text-underline-offset: 2px; }
+code { font-size: 12px; background: var(--wash); border-radius: 4px; padding: 1px 4px; }
+
+/* ---- masthead ---- */
+.topbar { display: flex; align-items: center; gap: 16px; padding: 16px 0; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-primary); text-decoration: none; }
+.brand svg { width: 28px; height: 28px; }
+.topbar nav { display: flex; gap: 4px; margin-left: auto; }
+.topbar nav a {
+  color: var(--text-secondary); text-decoration: none; border-radius: 8px; padding: 6px 10px;
   display: inline-flex; align-items: center; gap: 6px;
 }
-header nav a:hover { background: var(--wash); }
-header nav svg { width: 16px; height: 16px; flex: none; }
-h1 { font-size: 22px; margin: 0 0 4px; }
-h2 { font-size: 15px; margin: 0; }
-h3 { font-size: 14px; margin: 16px 0 4px; }
-.lead { color: var(--text-secondary); margin: 0 0 4px; max-width: 760px; }
-.sub { color: var(--text-muted); margin: 0; font-size: 12px; }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
-.stat .label { color: var(--text-secondary); font-size: 12px; }
-.stat .value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.topbar nav a:hover { background: var(--wash); color: var(--text-primary); }
+.topbar nav svg { width: 16px; height: 16px; flex: none; }
+.hero { padding: 24px 0 28px; max-width: 820px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px;
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px 3px 8px;
+}
+.eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--up); }
+h1 { font-size: clamp(28px, 4.2vw, 44px); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 14px; font-weight: 700; }
+h1 span { color: var(--text-muted); }
+.lead { font-size: 16px; color: var(--text-secondary); margin: 0 0 10px; }
+.sub { color: var(--text-muted); margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* ---- headline numbers ---- */
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+}
+.stat .label { color: var(--text-secondary); font-size: 12px; font-weight: 500; }
+.stat .value {
+  font-size: 26px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .stat .detail { color: var(--text-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.filters {
-  display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin-bottom: 16px;
-  position: sticky; top: 0; z-index: 2; padding: 8px 0; background: var(--page);
+.stat .spark { margin-top: 6px; width: 100%; height: 28px; }
+
+/* ---- toolbar ---- */
+.toolbar {
+  position: sticky; top: 0; z-index: 3; margin: 0 -24px 16px; padding: 10px 24px;
+  background: color-mix(in srgb, var(--page) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid transparent;
 }
-.filters label, .filters .group { display: flex; gap: 8px; align-items: center; color: var(--text-secondary); }
-.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.toolbar.stuck { border-bottom-color: var(--border); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.ctl { display: flex; gap: 8px; align-items: center; color: var(--text-muted); font-size: 12px; font-weight: 500; }
+.seg {
+  display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px;
+  background: var(--wash); border: 1px solid var(--border);
+}
 .seg button {
-  font: inherit; color: var(--text-secondary); background: var(--surface);
-  border: 0; padding: 4px 12px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 500; color: var(--text-secondary); background: transparent;
+  border: 0; border-radius: 7px; padding: 3px 10px; cursor: pointer;
 }
-.seg button + button { border-left: 1px solid var(--border); }
-.seg button:hover { background: var(--wash); }
-.seg button[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; background: var(--wash); }
-select, input[type="search"] {
-  font: inherit; color: var(--text-primary); background: var(--surface);
-  border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+.seg button:hover { color: var(--text-primary); }
+.seg button[aria-pressed="true"] { color: var(--text-primary); background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+.search { margin-left: auto; position: relative; }
+.search svg { position: absolute; left: 9px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: var(--text-muted); }
+input[type="search"] {
+  font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 9px; padding: 5px 10px 5px 28px; width: 200px;
 }
+input[type="search"]:focus { outline: 2px solid color-mix(in srgb, var(--c1) 40%, transparent); outline-offset: 1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip {
+  font: inherit; font-size: 12px; color: var(--text-secondary); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px 3px 8px;
+}
+.chip:hover { color: var(--text-primary); border-color: var(--axis); }
+.chip[aria-pressed="true"] { color: var(--text-primary); border-color: currentColor; font-weight: 600; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.chip b { font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- cards ---- */
 .card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-  padding: 16px; margin-bottom: 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 20px; margin-bottom: 16px; min-width: 0;
 }
-.card-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; margin-bottom: 8px; }
-.note { color: var(--text-secondary); font-size: 12px; margin: 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--text-secondary); margin-left: auto; }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
-.key { display: inline-block; width: 14px; height: 2px; border-radius: 1px; }
+.card-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-start; margin-bottom: 12px; }
+.card-head > div:first-child { flex: 1 1 280px; }
+h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
+h3 { font-size: 13px; font-weight: 650; margin: 0 0 6px; color: var(--text-primary); }
+.note { color: var(--text-muted); font-size: 12px; margin: 2px 0 0; }
+.split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; }
+.split > .card { margin-bottom: 16px; }
+
+/* ---- line chart ---- */
 .chart-wrap { position: relative; }
-#chart { display: block; width: 100%; outline-offset: 2px; }
+#chart { display: block; width: 100%; outline-offset: 4px; border-radius: 4px; }
 #chart text { font-size: 11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
-#chart text.end-label { fill: var(--text-secondary); }
+#chart text.end-label { fill: var(--text-secondary); font-size: 11.5px; }
 #chart text.end-label.hl { fill: var(--text-primary); font-weight: 600; }
 #tooltip {
-  position: absolute; top: 8px; pointer-events: none; display: none;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  padding: 8px 10px; font-size: 12px; line-height: 1.45;
+  position: absolute; top: 8px; pointer-events: none; display: none; z-index: 2;
+  background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  padding: 10px 12px; font-size: 12px; line-height: 1.45;
 }
-#tooltip .date { color: var(--text-secondary); margin-bottom: 4px; }
+#tooltip .date { color: var(--text-secondary); font-weight: 600; margin-bottom: 6px; }
 #tooltip .rows { display: grid; grid-template-rows: repeat(var(--rows), auto); grid-auto-flow: column; column-gap: 16px; }
-#tooltip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); }
-#tooltip .row b { color: var(--text-primary); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+#tooltip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); padding: 0 4px; border-radius: 4px; }
+#tooltip .row b { color: var(--text-primary); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
 #tooltip .row.hl { color: var(--text-primary); font-weight: 600; background: var(--wash); }
-.race-ctl { display: flex; align-items: center; gap: 12px; margin-left: auto; }
-.race-ctl button {
-  font: inherit; color: var(--text-primary); background: var(--surface); cursor: pointer;
-  border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px; min-width: 64px;
+#tooltip .more { color: var(--text-muted); margin-top: 6px; }
+.key { display: inline-block; width: 10px; height: 3px; border-radius: 2px; flex: none; }
+
+/* ---- bar chart race ---- */
+.race-ctl { display: flex; align-items: center; gap: 10px; }
+.play {
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--surface); background: var(--text-primary); cursor: pointer;
+  border: 0; border-radius: 999px; padding: 5px 14px 5px 10px; display: inline-flex; align-items: center; gap: 6px;
 }
-.race-ctl button:hover { background: var(--wash); }
-.race-ctl input { width: 240px; accent-color: var(--c1); }
-#race-date { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; min-width: 110px; text-align: right; }
+.play svg { width: 12px; height: 12px; }
+.race-ctl input { width: 160px; accent-color: var(--c1); }
+#race-date { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; min-width: 92px; text-align: right; }
 #race { position: relative; overflow: hidden; }
 .race-row {
   position: absolute; left: 0; right: 0; top: 0; height: 24px;
-  display: grid; grid-template-columns: 220px 1fr; align-items: center;
+  display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 10px; align-items: center;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
-.race-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.race-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
 .race-track { display: flex; align-items: center; gap: 8px; }
-.race-fill { height: 16px; min-width: 2px; border-radius: 0 4px 4px 0; transition: width 0.15s linear; }
-.race-value { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.race-fill { height: 16px; min-width: 2px; border-radius: 3px 5px 5px 3px; transition: width 0.15s linear; }
+.race-value { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 @media (prefers-reduced-motion: reduce) { .race-row, .race-fill { transition: none; } }
-.table-wrap { overflow-x: auto; }
+
+/* ---- category share ---- */
+.share-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; margin: 4px 0 14px; }
+.share-bar div { min-width: 2px; }
+.cat-list { list-style: none; margin: 0; padding: 0; }
+.cat-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: center; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; cursor: pointer; }
+.cat-list li:hover { background: var(--wash); }
+.cat-list li[aria-current="true"] { background: var(--wash); font-weight: 600; }
+.cat-list .name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; }
+.cat-list .name span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cat-list .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.cat-list .n { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.cat-list .v { font-size: 13px; font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+
+/* ---- table ---- */
+.table-wrap { overflow-x: auto; margin: 0 -20px -18px; }
 table { border-collapse: collapse; width: 100%; }
-th, td { padding: 6px 10px; text-align: left; white-space: nowrap; }
-th { font-size: 12px; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--axis); }
+th, td { padding: 7px 10px; text-align: left; white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 20px; }
+th:last-child, td:last-child { padding-right: 20px; }
+th {
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);
+  background: var(--raised); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
 th[data-sort] { cursor: pointer; user-select: none; }
 th[data-sort]:hover { color: var(--text-primary); }
+th[aria-sort="descending"], th[aria-sort="ascending"] { color: var(--text-primary); }
 th[aria-sort="descending"]::after { content: " \2193"; }
 th[aria-sort="ascending"]::after { content: " \2191"; }
 td { border-bottom: 1px solid var(--grid); }
+tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--wash); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-td.cat { color: var(--text-secondary); }
-td.wrap { white-space: normal; min-width: 140px; max-width: 200px; font-size: 12px; line-height: 1.3; }
+td.rank { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; width: 1%; }
+td.pkg { font-weight: 550; }
+td.cat { color: var(--text-secondary); font-size: 12px; }
+td.wrap { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+td.wrap .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
 td.muted { color: var(--text-muted); }
-td.bar { width: 12%; min-width: 80px; }
-.bar-fill { height: 12px; min-width: 2px; border-radius: 0 4px 4px 0; }
-.icon { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
+td.bar { width: 10%; min-width: 72px; padding-left: 0; }
+.bar-fill { height: 8px; min-width: 2px; border-radius: 4px; opacity: 0.85; }
+.icon { display: inline-block; width: 20px; height: 20px; border-radius: 5px; margin-right: 8px; vertical-align: middle; }
 span.icon { background: var(--wash); color: var(--text-muted); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
-#tooltip .icon { width: 14px; height: 14px; margin-right: 0; vertical-align: 0; border-radius: 3px; font-size: 9px; line-height: 14px; flex: none; }
-#tooltip .more { color: var(--text-muted); margin-top: 4px; }
+#tooltip .icon, .race-name .icon { width: 14px; height: 14px; margin-right: 0; vertical-align: -2px; border-radius: 3px; font-size: 9px; line-height: 14px; flex: none; }
+.race-name .icon { margin-right: 6px; width: 16px; height: 16px; line-height: 16px; }
 td a { color: inherit; text-decoration: none; }
 td a:hover { text-decoration: underline; }
 .up { color: var(--up); }
 .down { color: var(--down); }
 .spark { display: block; }
-.about { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 32px; color: var(--text-secondary); }
-.about p { margin: 0 0 8px; }
-footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 24px 0 8px; }
+.empty { color: var(--text-muted); text-align: center; padding: 24px; }
+
+/* ---- about ---- */
+.about { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 32px; color: var(--text-secondary); }
+.about p { margin: 0 0 10px; }
+footer { color: var(--text-muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; padding: 8px 0 0; }
+footer a { color: inherit; }
+
+@media (max-width: 960px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .split, .about { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  main { padding: 0 14px 24px; }
+  /* too tall to keep on screen at this width */
+  .toolbar { position: static; margin: 0 -14px 12px; padding: 8px 14px; }
+  .topbar nav a span { display: none; }
+  .search { margin-left: 0; width: 100%; }
+  input[type="search"] { width: 100%; }
+  .card { padding: 14px; }
+  .table-wrap { margin: 0 -14px -14px; }
+  .stat .value { font-size: 20px; }
+}
 </style>
 </head>
 <body>
 <main>
-  <header>
-    <div class="intro">
-      <h1>Atomistic PyPI usage</h1>
-      <p class="lead">How much are the Python packages of atomistic simulation and atomistic machine learning used?
-        Daily PyPI downloads of <span id="n-pk"></span> packages: a curated list, the Python packages of
-        <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>
-        and <a href="https://atomistic.software">atomistic.software</a>, and the most-downloaded packages that depend on them.
-        Download data from <a href="https://clickpy.clickhouse.com">ClickPy</a>.</p>
-      <p class="sub" id="sub"></p>
-    </div>
+  <div class="topbar">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="4.5" fill="var(--c1)"/><ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="var(--c2)" stroke-width="1.8"/><ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="var(--c3)" stroke-width="1.8" transform="rotate(60 16 16)"/><ellipse cx="16" cy="16" rx="14" ry="5.5" fill="none" stroke="var(--c4)" stroke-width="1.8" transform="rotate(120 16 16)"/></svg>
+      Atomistic PyPI usage
+    </a>
     <nav>
-      <a href="#about"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/></svg>About</a>
-      <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 5v6M5 8h6"/></svg>Add a package</a>
-      <a href="https://github.com/lan496/pypi-atomistic-usage"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub</a>
+      <a href="#about"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/></svg><span>About</span></a>
+      <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 5v6M5 8h6"/></svg><span>Add a package</span></a>
+      <a href="https://github.com/lan496/pypi-atomistic-usage"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
     </nav>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow"><i></i><span id="fresh"></span></p>
+    <h1>How much is atomistic Python used? <span>PyPI downloads of <span id="n-pk"></span> packages.</span></h1>
+    <p class="lead">A curated list, the Python packages of
+      <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>
+      and <a href="https://atomistic.software">atomistic.software</a>, and the most-downloaded packages that depend on them.
+      Download data from <a href="https://clickpy.clickhouse.com">ClickPy</a>.</p>
+    <p class="sub" id="sub"></p>
   </header>
 
   <div class="stats" id="stats"></div>
 
-  <div class="filters">
-    <div class="group">Period
-      <div class="seg" id="days">
-        <button type="button" data-v="30">30 days</button>
-        <button type="button" data-v="90">90 days</button>
-        <button type="button" data-v="180">180 days</button>
-        <button type="button" data-v="0">All years</button>
+  <div class="toolbar" id="toolbar">
+    <div class="controls">
+      <div class="ctl">Period
+        <div class="seg" id="days">
+          <button type="button" data-v="30">30d</button>
+          <button type="button" data-v="90">90d</button>
+          <button type="button" data-v="180">180d</button>
+          <button type="button" data-v="0">All years</button>
+        </div>
       </div>
-    </div>
-    <label>Category <select id="cat"></select></label>
-    <div class="group">Platform
-      <div class="seg" id="os">
-        <button type="button" data-v="all">All</button>
-        <button type="button" data-v="linux">Linux</button>
-        <button type="button" data-v="desktop">macOS + Windows</button>
+      <div class="ctl">Platform
+        <div class="seg" id="os">
+          <button type="button" data-v="all">All</button>
+          <button type="button" data-v="linux">Linux</button>
+          <button type="button" data-v="desktop">macOS + Windows</button>
+        </div>
       </div>
-    </div>
-    <div class="group">Lines
-      <div class="seg" id="lines">
-        <button type="button" data-v="10">Top 10</button>
-        <button type="button" data-v="25">Top 25</button>
-        <button type="button" data-v="0">All</button>
+      <div class="ctl">Lines
+        <div class="seg" id="lines">
+          <button type="button" data-v="10">10</button>
+          <button type="button" data-v="25">25</button>
+          <button type="button" data-v="0">All</button>
+        </div>
       </div>
-    </div>
-    <div class="group">Y axis
-      <div class="seg" id="scale">
-        <button type="button" data-v="log">Log</button>
-        <button type="button" data-v="linear">Linear</button>
+      <div class="ctl">Scale
+        <div class="seg" id="scale">
+          <button type="button" data-v="log">Log</button>
+          <button type="button" data-v="linear">Linear</button>
+        </div>
       </div>
+      <label class="search">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5 14 14"/></svg>
+        <input type="search" id="q" placeholder="Find a package" aria-label="Find a package">
+      </label>
     </div>
-    <label>Find <input type="search" id="q" placeholder="package name" size="14"></label>
+    <div class="chips" id="cats" role="group" aria-label="Category"></div>
   </div>
 
   <section class="card">
     <div class="card-head">
-      <h2 id="chart-title"></h2>
-      <div class="legend" id="legend"></div>
+      <div>
+        <h2 id="chart-title"></h2>
+        <p class="note">Hover to read values; arrow keys move the date and the selected package. Colours follow the categories above.</p>
+      </div>
     </div>
     <div class="chart-wrap">
-      <svg id="chart" height="440" tabindex="0" role="img"
+      <svg id="chart" height="460" tabindex="0" role="img"
            aria-label="Downloads per day for each package over time. Left and right arrow keys move the date, up and down arrow keys select a package. The table below carries the same totals."></svg>
       <div id="tooltip"></div>
     </div>
   </section>
 
-  <section class="card">
-    <div class="card-head">
-      <h2 id="race-title"></h2>
-      <div class="race-ctl">
-        <button type="button" id="race-play">Play</button>
-        <input type="range" id="race-pos" aria-label="Date shown in the bar chart race">
-        <span id="race-date"></span>
+  <div class="split">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Bar chart race</h2>
+          <p class="note" id="race-note"></p>
+        </div>
+        <div class="race-ctl">
+          <button type="button" class="play" id="race-play"></button>
+          <input type="range" id="race-pos" aria-label="Date shown in the bar chart race">
+          <span id="race-date"></span>
+        </div>
       </div>
-    </div>
-    <div id="race"></div>
-  </section>
+      <div id="race"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Downloads by category</h2>
+          <p class="note" id="share-note"></p>
+        </div>
+      </div>
+      <div id="share"></div>
+    </section>
+  </div>
 
   <section class="card">
     <div class="card-head">
-      <h2>Downloads in the period</h2>
-      <p class="note">Click a column to sort. Hover a row to highlight that package in the chart.</p>
+      <div>
+        <h2>All packages</h2>
+        <p class="note">Downloads in the chosen period. Click a column to sort; hover a row to highlight that package in the chart.</p>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
+            <th>#</th>
             <th data-sort="name">Package</th>
             <th data-sort="category">Category</th>
             <th data-sort="via">Found via</th>
@@ -274,7 +403,7 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
             <th class="num" data-sort="change" id="change-head"></th>
             <th class="num" data-sort="ci" id="ci-head" title="Share of downloads whose installer reported a CI run">CI</th>
             <th class="num" data-sort="bulk" id="bulk-head">Bulk rebuilds</th>
-            <th>Trend (own scale per row)</th>
+            <th>Trend</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -283,7 +412,7 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
   </section>
 
   <section class="card" id="about">
-    <h2>About</h2>
+    <div class="card-head"><div><h2>About</h2></div></div>
     <div class="about">
       <div>
         <h3>Data</h3>
@@ -291,6 +420,8 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
           "All" leaves out installers that mirror PyPI wholesale (bandersnatch, devpi, Nexus, Artifactory, z3c.pypimirror).
           The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
           The data are refreshed monthly.</p>
+      </div>
+      <div>
         <h3>Packages</h3>
         <p>Listed packages are a hand-picked list, every PyPI package of
           <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>,
@@ -307,15 +438,15 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
           <b>Bulk rebuilds</b> is the share that came, without a CI flag, from one pinned environment downloading the same version at least <span id="bulk-min"></span> times on one day (same installer, Python, OS, glibc and country): a Docker image or batch job rebuilt many times rather than many users.</p>
         <p>Automated installs run almost entirely on Linux, so "macOS + Windows" leaves them out; it also leaves out real use on Linux workstations and clusters, and is therefore a floor on interactive use, not an estimate of it.
           Installs from outside PyPI, such as conda-forge, are not counted.</p>
-        <h3>Credits</h3>
-        <p>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
-          All download data come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, run by ClickHouse, Inc., through its public SQL endpoint; the queries follow the <a href="https://github.com/ClickHouse/clickpy">ClickPy source</a> (Apache-2.0).
-          This site is not affiliated with ClickHouse or ClickPy.
-          Icons are the GitHub organization or user that hosts each repository.</p>
       </div>
     </div>
   </section>
-  <footer id="footer"></footer>
+  <footer>
+    <span id="footer"></span>
+    <span>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
+      Data from <a href="https://clickpy.clickhouse.com">ClickPy</a> by ClickHouse, Inc., queried as in the <a href="https://github.com/ClickHouse/clickpy">ClickPy source</a> (Apache-2.0); not affiliated with ClickHouse or ClickPy.
+      Icons are the GitHub owner of each repository.</span>
+  </footer>
 </main>
 
 <script src="data.js"></script>
@@ -334,6 +465,8 @@ const RACE_ROWS = 12;
 const RACE_ROW_H = 28;
 const RACE_STEP_MS = 150;
 const OS = ["all", "linux", "desktop"];
+const PLAY_ICON = '<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M3 1.5v9l7.5-4.5z"/></svg>';
+const PAUSE_ICON = '<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/></svg>';
 
 // days of each month covered by the data; the last month may be partial
 const MONTH_DAYS = D.months.map((m) => {
@@ -343,9 +476,10 @@ const MONTH_DAYS = D.months.map((m) => {
   return Number((end < last ? end : last).slice(8));
 });
 
+const catColor = (c) => `var(--c${D.categories.indexOf(c) + 1})`;
 const PK = D.packages.map((p) => ({
   ...p,
-  color: `var(--c${D.categories.indexOf(p.category) + 1})`,
+  color: catColor(p.category),
   roll: Object.fromEntries(OS.map((os) => [os, rolling(p.daily[os])])),
   // months before the first download are not drawn
   monthly: Object.fromEntries(OS.map((os) => {
@@ -370,21 +504,19 @@ const race = { i: null, timer: null, rows: new Map() };
 init();
 
 function init() {
+  const listed = PK.filter((p) => p.via === null).length;
   document.getElementById("n-pk").textContent = PK.length;
+  document.getElementById("fresh").textContent = `Updated monthly · data to ${D.dates[N - 1]}`;
   document.getElementById("sub").textContent =
-    `Daily data ${D.dates[0]} to ${D.dates[N - 1]}, monthly from ${D.months[FIRST_MONTH]}. Fetched ${D.fetched}.`;
+    `${listed} listed packages and ${PK.length - listed} dependents. Daily data ${D.dates[0]} to ${D.dates[N - 1]}, monthly from ${D.months[FIRST_MONTH]}.`;
   document.getElementById("footer").textContent = `Data fetched ${D.fetched} from ClickPy and PyPI.`;
   document.getElementById("bulk-min").textContent = full(D.bulk_min);
   for (const node of document.querySelectorAll(".auto-days")) node.textContent = D.automation_days;
-  document.getElementById("ci-head").textContent = `CI, ${D.automation_days} d`;
-  document.getElementById("bulk-head").textContent = `Bulk, ${D.automation_days} d`;
+  document.getElementById("ci-head").textContent = `CI ${D.automation_days}d`;
+  document.getElementById("bulk-head").textContent = `Bulk ${D.automation_days}d`;
   document.getElementById("bulk-head").title =
     `Share of downloads of the last ${D.automation_days} days from one environment downloading one version at least ${full(D.bulk_min)} times a day`;
 
-  const cat = document.getElementById("cat");
-  cat.append(new Option("All", ""));
-  for (const c of D.categories) cat.append(new Option(c, c));
-  cat.addEventListener("change", () => { state.cat = cat.value; renderAll(); });
   const q = document.getElementById("q");
   q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); renderAll(); });
 
@@ -392,6 +524,7 @@ function init() {
   bindSeg("os", String);
   bindSeg("lines", Number);
   bindSeg("scale", String);
+  renderChips();
 
   for (const th of document.querySelectorAll("th[data-sort]")) {
     th.addEventListener("click", () => {
@@ -402,20 +535,17 @@ function init() {
     });
   }
 
-  const legend = document.getElementById("legend");
-  D.categories.forEach((c, i) => {
-    const item = el("span");
-    const key = el("i", { class: "key" });
-    key.style.background = `var(--c${i + 1})`;
-    item.append(key, c);
-    legend.append(item);
-  });
-
   chart.addEventListener("pointermove", onPointer);
   chart.addEventListener("pointerleave", clearHover);
   chart.addEventListener("keydown", onKey);
   chart.addEventListener("blur", clearHover);
   window.addEventListener("resize", renderChart);
+
+  // a hairline under the toolbar once it sticks to the top
+  const toolbar = document.getElementById("toolbar");
+  const sentinel = el("div");
+  toolbar.before(sentinel);
+  new IntersectionObserver(([e]) => toolbar.classList.toggle("stuck", !e.isIntersecting)).observe(sentinel);
 
   const pos = document.getElementById("race-pos");
   pos.addEventListener("input", () => { stopRace(); race.i = Number(pos.value); drawRace(); });
@@ -426,10 +556,17 @@ function init() {
 function renderAll() {
   state.hl = null;
   state.cursor = null;
+  syncChips();
   renderStats();
   renderChart();
   renderRace();
+  renderShare();
   renderTable();
+}
+
+function setCat(c) {
+  state.cat = state.cat === c ? "" : c;
+  renderAll();
 }
 
 // The time axis of the chosen period: daily 7-day means, or monthly means per day.
@@ -474,16 +611,47 @@ function totals(p) {
   return { total, days, change: prev12 > 0 ? last12 / prev12 - 1 : null, basePerDay: prev12 / 365 };
 }
 
-// packages passing the filters, largest period total first
-function visible() {
+// packages passing the search and, unless told otherwise, the category; largest period total first
+function visible(byCat = true) {
   return PK
-    .filter((p) => (!state.cat || p.category === state.cat)
+    .filter((p) => (!byCat || !state.cat || p.category === state.cat)
       && (!state.q || p.name.toLowerCase().includes(state.q)))
     .map((p) => {
       const t = totals(p);
       return { p, total: t.total, perDay: t.total / t.days, change: t.change, basePerDay: t.basePerDay };
     })
     .sort((a, b) => b.total - a.total);
+}
+
+function periodName() {
+  return state.days ? `last ${state.days} days` : `since ${D.months[FIRST_MONTH]}`;
+}
+
+function platformName() {
+  return { all: "all platforms", linux: "Linux", desktop: "macOS + Windows" }[state.os];
+}
+
+// ---- category chips ----
+
+function renderChips() {
+  const box = document.getElementById("cats");
+  const all = el("button", { type: "button", class: "chip", "data-c": "" }, "All categories");
+  all.addEventListener("click", () => setCat(""));
+  box.append(all);
+  for (const c of D.categories) {
+    const dot = el("i", { class: "dot" });
+    dot.style.background = catColor(c);
+    const chip = el("button", { type: "button", class: "chip", "data-c": c }, dot, c,
+      el("b", {}, String(PK.filter((p) => p.category === c).length)));
+    chip.addEventListener("click", () => setCat(c));
+    box.append(chip);
+  }
+}
+
+function syncChips() {
+  for (const chip of document.querySelectorAll("#cats .chip")) {
+    chip.setAttribute("aria-pressed", String(chip.dataset.c === state.cat));
+  }
 }
 
 // ---- headline numbers ----
@@ -494,25 +662,26 @@ function renderStats() {
   // a floor of 100 downloads a day before the rise keeps tiny packages with huge relative jumps out
   const withChange = rows.filter((r) => r.change !== null && r.basePerDay >= 100);
   const riser = withChange.sort((a, b) => b.change - a.change)[0];
-  const listed = PK.filter((p) => p.via === null).length;
-  const period = state.days ? `last ${state.days} days` : `since ${D.months[FIRST_MONTH]}`;
+  const ax = axis();
+  const from = Math.max(ax.start, ax.first);
+  const summed = [];
+  for (let i = from; i < ax.n; i++) summed.push(rows.reduce((s, r) => s + (ax.values(r.p)[i] ?? 0), 0));
   const box = document.getElementById("stats");
   box.replaceChildren(
-    stat("Packages shown", full(rows.length), `${listed} listed, ${PK.length - listed} dependents`),
-    stat("Downloads", compact(total), `${period}, ${platformName()}`),
+    stat("Downloads", compact(total), `${periodName()}, ${platformName()}`, sparkline(summed, "var(--c1)", true)),
+    stat("Packages shown", full(rows.length), state.cat || (state.q ? `matching "${state.q}"` : "all categories")),
     stat("Most downloaded", rows[0] ? rows[0].p.name : "-", rows[0] ? `${compact(rows[0].perDay)} per day` : ""),
     stat("Fastest growing", riser ? riser.p.name : "-",
-      riser ? `${pct(riser.change, true)} ${state.days ? "vs. preceding period" : "last 12 months vs. the 12 before"}` : ""),
+      riser ? `${pct(riser.change, true)} ${state.days ? "vs. preceding period" : "last 12 mo. vs. prior 12"}` : ""),
   );
 }
 
-function stat(label, value, detail) {
-  return el("div", { class: "stat" },
-    el("div", { class: "label" }, label), el("div", { class: "value" }, value), el("div", { class: "detail", title: detail }, detail));
-}
-
-function platformName() {
-  return { all: "all platforms", linux: "Linux", desktop: "macOS + Windows" }[state.os];
+function stat(label, value, detail, extra) {
+  const node = el("div", { class: "stat" },
+    el("div", { class: "label" }, label), el("div", { class: "value", title: value }, value),
+    el("div", { class: "detail", title: detail }, detail));
+  if (extra) node.append(extra);
+  return node;
 }
 
 // ---- line chart ----
@@ -520,11 +689,12 @@ function platformName() {
 function renderChart() {
   const ax = axis();
   document.getElementById("chart-title").textContent = state.days
-    ? "Downloads per day (7-day rolling mean)" : "Downloads per day (monthly mean)";
+    ? "Downloads per day, 7-day rolling mean" : "Downloads per day, monthly mean";
   const ranked = visible().map((r) => r.p);
   const pk = state.lines ? ranked.slice(0, state.lines) : ranked;
   const W = chart.clientWidth;
   const H = Number(chart.getAttribute("height"));
+  M.right = W < 640 ? 110 : 190;
   const span = Math.max(1, ax.n - 1 - ax.start);
   const pw = W - M.left - M.right;
   const ph = H - M.top - M.bottom;
@@ -552,7 +722,7 @@ function renderChart() {
       d: linePath(ax.values(p), ax.start, x, y),
       fill: "none",
       stroke: p.color,
-      "stroke-width": 2,
+      "stroke-width": 1.75,
       "stroke-linejoin": "round",
       "stroke-linecap": "round",
     });
@@ -569,6 +739,9 @@ function renderChart() {
     label.text = svg("text", { x: W - M.right + 14, y: label.y + 4, class: "end-label" }, label.p.name);
     chart.append(label.text);
   }
+  if (!pk.length) {
+    chart.append(svg("text", { x: W / 2, y: H / 2, "text-anchor": "middle" }, "No package matches the filters."));
+  }
   const hover = svg("g");
   chart.append(hover);
   view = { ax, pk, paths, labels, hover, span, x, y, pw, ph, W };
@@ -580,8 +753,8 @@ function renderHover() {
   const { ax, pk, paths, labels, hover, x, y, ph } = view;
   for (const [name, path] of paths) {
     const isHl = name === state.hl;
-    path.setAttribute("stroke-width", isHl ? 3 : 2);
-    path.setAttribute("opacity", state.hl && !isHl ? 0.18 : 1);
+    path.setAttribute("stroke-width", isHl ? 3 : 1.75);
+    path.setAttribute("opacity", state.hl && !isHl ? 0.15 : 1);
   }
   for (const label of labels) {
     const isHl = label.p.name === state.hl;
@@ -599,7 +772,7 @@ function renderHover() {
     return;
   }
   const cx = x(state.cursor);
-  hover.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)" }));
+  hover.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)", "stroke-dasharray": "3 3" }));
   if (hl && ax.values(hl)[state.cursor] !== null) {
     hover.append(svg("circle", {
       cx, cy: y(ax.values(hl)[state.cursor]), r: 5, fill: hl.color,
@@ -706,8 +879,8 @@ function clearHover() {
 function renderRace() {
   stopRace();
   const ax = axis();
-  document.getElementById("race-title").textContent = state.days
-    ? "Bar chart race: downloads per day (7-day rolling mean)" : "Bar chart race: downloads per day (monthly mean)";
+  document.getElementById("race-note").textContent = state.days
+    ? `Top ${RACE_ROWS} by downloads per day, 7-day rolling mean` : `Top ${RACE_ROWS} by downloads per day, monthly mean`;
   const pos = document.getElementById("race-pos");
   pos.min = Math.max(ax.first, ax.start);
   pos.max = ax.n - 1;
@@ -740,9 +913,9 @@ function drawRace() {
     const { row, fill, value } = race.rows.get(p);
     row.style.transform = `translateY(${Math.min(rank, RACE_ROWS) * RACE_ROW_H}px)`;
     row.style.opacity = rank < RACE_ROWS && v > 0 ? 1 : 0;
-    // 90px stays free at the right for the value
-    fill.style.width = `calc((100% - 90px) * ${v / max})`;
-    value.textContent = full(v);
+    // 64px stays free at the right for the value
+    fill.style.width = `calc((100% - 64px) * ${v / max})`;
+    value.textContent = compact(v);
   });
   document.getElementById("race-date").textContent = ax.labels[race.i];
   document.getElementById("race-pos").value = race.i;
@@ -752,7 +925,7 @@ function playRace() {
   const { ax } = race;
   const first = Math.max(ax.first, ax.start);
   if (race.i >= ax.n - 1) race.i = first;
-  document.getElementById("race-play").textContent = "Pause";
+  setPlay(true);
   race.timer = setInterval(() => {
     race.i += 1;
     drawRace();
@@ -763,18 +936,57 @@ function playRace() {
 function stopRace() {
   clearInterval(race.timer);
   race.timer = null;
-  document.getElementById("race-play").textContent = "Play";
+  setPlay(false);
+}
+
+function setPlay(playing) {
+  document.getElementById("race-play").innerHTML = `${playing ? PAUSE_ICON : PLAY_ICON}${playing ? "Pause" : "Play"}`;
+}
+
+// ---- category share ----
+
+// Totals per category of the packages matching the search, whatever category is chosen.
+function renderShare() {
+  const rows = visible(false);
+  const byCat = D.categories.map((c) => {
+    const inCat = rows.filter((r) => r.p.category === c);
+    return { c, n: inCat.length, total: inCat.reduce((s, r) => s + r.total, 0) };
+  });
+  const total = byCat.reduce((s, b) => s + b.total, 0) || 1;
+  document.getElementById("share-note").textContent = `Share of downloads, ${periodName()}, ${platformName()}. Click to filter.`;
+  const bar = el("div", { class: "share-bar", "aria-hidden": "true" });
+  const list = el("ul", { class: "cat-list" });
+  for (const b of [...byCat].sort((a, b2) => b2.total - a.total)) {
+    const seg = el("div");
+    seg.style.flex = String(b.total / total);
+    seg.style.background = catColor(b.c);
+    seg.style.opacity = state.cat && state.cat !== b.c ? 0.25 : 1;
+    if (b.total > 0) bar.append(seg);
+    const dot = el("i", { class: "dot" });
+    dot.style.background = catColor(b.c);
+    const li = el("li", { "aria-current": String(state.cat === b.c), title: `${b.c}: ${full(b.total)} downloads` },
+      el("div", { class: "name" }, dot, el("span", {}, b.c)),
+      el("span", { class: "n" }, `${b.n} pkg`),
+      el("span", { class: "v" }, `${(100 * b.total / total).toFixed(1)}%`));
+    li.addEventListener("click", () => setCat(b.c));
+    list.append(li);
+  }
+  document.getElementById("share").replaceChildren(bar, list);
 }
 
 // ---- table ----
 
 function renderTable() {
   const ax = axis();
-  document.getElementById("change-head").textContent = state.days ? "vs. preceding period" : "Last 12 mo. vs. prior 12";
+  document.getElementById("change-head").textContent = state.days ? "vs. prev." : "12 mo. vs. prior";
+  document.getElementById("change-head").title = state.days
+    ? "Change against the preceding period of the same length" : "Last 12 months against the 12 before them";
   for (const th of document.querySelectorAll("th[data-sort]")) {
     th.setAttribute("aria-sort", th.dataset.sort === state.sort ? (state.desc ? "descending" : "ascending") : "none");
   }
   const rows = visible();
+  // rank by period total, whatever the sort
+  const rank = new Map(rows.map((r, k) => [r.p, k + 1]));
   const max = Math.max(...rows.map((r) => r.total), 1);
   const key = {
     name: (r) => r.p.name.toLowerCase(), category: (r) => r.p.category, via: (r) => r.p.via ?? "",
@@ -789,19 +1001,26 @@ function renderTable() {
 
   const body = document.getElementById("rows");
   body.replaceChildren();
+  if (!rows.length) {
+    body.append(el("tr", {}, el("td", { class: "empty", colspan: 12 }, "No package matches the filters.")));
+    return;
+  }
   for (const { p, total, perDay, change } of rows) {
     const link = el("a", { href: `https://pypi.org/project/${p.name}/` }, p.name);
     const fill = el("div", { class: "bar-fill" });
     fill.style.width = `${(total / max) * 100}%`;
     fill.style.background = p.color;
+    const dot = el("i", { class: "dot" });
+    dot.style.background = p.color;
     const delta = el("td", { class: "num" }, "-");
     if (change !== null) {
       delta.textContent = pct(change, true);
       delta.classList.add(change >= 0 ? "up" : "down");
     }
     const tr = el("tr", {},
-      el("td", {}, icon(p), link),
-      el("td", { class: "cat wrap" }, p.category),
+      el("td", { class: "rank" }, String(rank.get(p))),
+      el("td", { class: "pkg" }, icon(p), link),
+      el("td", { class: "cat wrap", title: p.category }, dot, p.category),
       el("td", { class: "cat" }, p.via ?? "listed"),
       el("td", { class: "cat" }, p.since ?? "-"),
       el("td", { class: "num" }, full(total)),
@@ -810,7 +1029,7 @@ function renderTable() {
       delta,
       el("td", { class: "num muted" }, p.ci === null ? "-" : pct(p.ci)),
       el("td", { class: "num muted" }, p.bulk === null ? "-" : pct(p.bulk)),
-      el("td", {}, sparkline(ax.values(p).slice(Math.max(ax.start, ax.first)))));
+      el("td", {}, sparkline(ax.values(p).slice(Math.max(ax.start, ax.first)), p.color)));
     tr.addEventListener("pointerenter", () => {
       if (!view.paths.has(p.name)) return;
       state.hl = p.name;
@@ -821,16 +1040,25 @@ function renderTable() {
   }
 }
 
-function sparkline(values) {
-  const w = 120;
-  const h = 24;
+// A small line on its own scale; `wide` stretches it to its box with a soft area under it.
+function sparkline(values, color, wide = false) {
+  const w = wide ? 240 : 110;
+  const h = wide ? 28 : 22;
   const max = Math.max(...values.filter((v) => v !== null), 1);
   const node = svg("svg", { width: w, height: h, class: "spark", "aria-hidden": "true" });
+  if (wide) {
+    node.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    node.setAttribute("preserveAspectRatio", "none");
+  }
   const x = (i) => 1 + (i / Math.max(1, values.length - 1)) * (w - 2);
   const y = (v) => h - 2 - (v / max) * (h - 4);
+  const d = linePath(values, 0, x, y);
+  if (wide && d) {
+    node.append(svg("path", { d: `${d}L${x(values.length - 1)},${h}L${x(0)},${h}Z`, fill: color, opacity: 0.12 }));
+  }
   node.append(svg("path", {
-    d: linePath(values, 0, x, y), fill: "none", stroke: "var(--text-muted)",
-    "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round",
+    d, fill: "none", stroke: color, "stroke-width": 1.5, "vector-effect": "non-scaling-stroke",
+    "stroke-linejoin": "round", "stroke-linecap": "round",
   }));
   return node;
 }
