@@ -19,6 +19,7 @@ The demo user may run 60 queries and 600 s of execution time per hour; a run
 uses about 20 queries and 5 minutes. A refused run succeeds after the hour turns.
 """
 
+import gzip
 import http.client
 import json
 import re
@@ -289,6 +290,11 @@ def seed_packages() -> dict[str, dict]:
 
 def write_data(packages: dict[str, dict]) -> None:
     keys = sorted(packages)
+    # PyPI first: a failure there then costs none of the ClickPy quota
+    metas = {}
+    for key in keys:
+        metas[key] = fetch_pypi(key)
+        time.sleep(PYPI_INTERVAL_S)
     last = date.fromisoformat(clickpy("SELECT max(date) AS d FROM pypi.pypi_downloads_per_day")[0]["d"])
     first = last - timedelta(days=DAILY_DAYS - 1)
     dates = [first + timedelta(days=i) for i in range(DAILY_DAYS)]
@@ -300,8 +306,7 @@ def write_data(packages: dict[str, dict]) -> None:
     rows = []
     for key in keys:
         info = packages[key]
-        meta = fetch_pypi(key)
-        time.sleep(PYPI_INTERVAL_S)
+        meta = metas[key]
         rows.append({
             "name": info["name"],
             "category": info["category"],
@@ -515,23 +520,30 @@ def clickpy(sql: str) -> list[dict]:
 
 def http_get(url: str, data: bytes | None = None) -> bytes:
     request = urllib.request.Request(
-        url, data=data, headers={"User-Agent": "pypi-atomistic-usage"}
+        url,
+        data=data,
+        headers={"User-Agent": "pypi-atomistic-usage", "Accept-Encoding": "gzip"},
     )
     # Both PyPI and the shared ClickPy endpoint refuse requests now and then.
     for attempt in range(ATTEMPTS):
         try:
             with urllib.request.urlopen(request, timeout=300) as response:
-                return response.read()
+                body = response.read()
+                if response.headers.get("Content-Encoding") == "gzip":
+                    body = gzip.decompress(body)
+                return body
         except urllib.error.HTTPError as error:
             detail = error.read()[:300].decode(errors="replace")
             print(f"{url} failed ({error.code}): {detail}")
             if error.code == 404 or attempt == ATTEMPTS - 1:
                 raise
+            time.sleep(10 * 2**attempt)
         except (urllib.error.URLError, http.client.IncompleteRead) as error:
+            # dropped connections, which a quick retry usually gets past
             print(f"{url} failed: {error!r}")
             if attempt == ATTEMPTS - 1:
                 raise
-        time.sleep(10 * 2**attempt)
+            time.sleep(2)
     raise AssertionError("unreachable")
 
 
