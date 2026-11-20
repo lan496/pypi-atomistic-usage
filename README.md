@@ -38,3 +38,7 @@ The project is inspired by [atomistic.software](https://atomistic.software),
 which tracks the citations of atomistic simulation engines. The queries follow
 the materialized views of [ClickPy](https://github.com/ClickHouse/clickpy)
 (Apache-2.0).
+
+## License
+
+MIT; see [LICENSE](LICENSE).
