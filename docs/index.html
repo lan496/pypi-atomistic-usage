@@ -6,7 +6,7 @@
 <title>Atomistic PyPI usage: downloads of atomistic-simulation Python packages</title>
 <meta name="description" content="Daily and monthly PyPI downloads of Python packages for atomistic simulation and atomistic machine learning, with CI and bulk-rebuild shares.">
 <meta property="og:title" content="Atomistic PyPI usage">
-<meta property="og:description" content="How much are atomistic-simulation Python packages used? PyPI downloads of about 200 packages, updated weekly.">
+<meta property="og:description" content="How much are atomistic-simulation Python packages used? PyPI downloads of about 200 packages, updated monthly.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5' fill='%232a78d6'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%23eb6834' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%231baf7a' stroke-width='2' transform='rotate(60 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%23eda100' stroke-width='2' transform='rotate(120 16 16)'/%3E%3C/svg%3E">
 <style>
@@ -183,7 +183,8 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
       <p class="lead">How much are the Python packages of atomistic simulation and atomistic machine learning used?
         Daily PyPI downloads of <span id="n-pk"></span> packages: a curated list, the Python packages of
         <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>
-        and <a href="https://atomistic.software">atomistic.software</a>, and the most-downloaded packages that depend on them.</p>
+        and <a href="https://atomistic.software">atomistic.software</a>, and the most-downloaded packages that depend on them.
+        Download data from <a href="https://clickpy.clickhouse.com">ClickPy</a>.</p>
       <p class="sub" id="sub"></p>
     </div>
     <nav>
@@ -293,7 +294,7 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
         <p>Download counts come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, ClickHouse's public copy of the PyPI download logs, which goes back to 2016.
           "All" leaves out installers that mirror PyPI wholesale (bandersnatch, devpi, Nexus, Artifactory, z3c.pypimirror).
           The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
-          The data are refreshed weekly.</p>
+          The data are refreshed monthly.</p>
         <h3>Packages</h3>
         <p>"Listed" packages are a hand-picked list, every PyPI package of
           <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>,
@@ -312,7 +313,8 @@ footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 
           Installs from outside PyPI, such as conda-forge, are not counted.</p>
         <h3>Credits</h3>
         <p>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
-          Queries follow <a href="https://github.com/ClickHouse/clickpy">ClickPy</a> (Apache-2.0).
+          All download data come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, run by ClickHouse, Inc., through its public SQL endpoint; the queries follow the <a href="https://github.com/ClickHouse/clickpy">ClickPy source</a> (Apache-2.0).
+          This site is not affiliated with ClickHouse or ClickPy.
           Icons are the GitHub organization or user that hosts each repository.</p>
       </div>
     </div>
