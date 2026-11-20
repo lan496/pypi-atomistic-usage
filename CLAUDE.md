@@ -46,6 +46,9 @@ ClickPy demo user limits that shape the code:
 - At most 10,000 result rows per query: series queries return one row per
   project with a `groupArray` of points.
 - 60 s per query: raw-table queries are batched by `AUTOMATION_BATCH_ROWS`.
+- At most 10^9 rows read per query, silently truncated by default; `CLICKPY`
+  sets `read_overflow_mode=throw` so that such a query fails instead. Sums over
+  all of PyPI therefore use the small `pypi_downloads_per_month` view.
 - 60 queries and 600 s of execution per hour: a refused run succeeds after the
   hour turns. Check usage with `SELECT * FROM system.quota_usage`.
 - ClickPy project names are already PEP 503-normalized; `pypi.projects.name`
@@ -58,7 +61,8 @@ the per-system view, which cannot exclude mirrors, but mirrors report no system.
 ## Data contract (`docs/data.js`)
 
 Top level: `fetched`, `dates` (daily ISO days), `months` (`YYYY-MM`),
-`automation_days`, `bulk_min`, `categories` (= `list(SEEDS)`), `packages[]`.
+`automation_days`, `bulk_min`, `categories` (= `list(SEEDS)`), `pypi_monthly`
+(downloads per day of all of PyPI per month, aligned with `months`), `packages[]`.
 Each package: `name`, `category`, `via` (`null` for listed seeds; shown as
 "Found via"), `owner`, `since`, `daily` and `monthly`
 (each `{all, linux, desktop}` aligned with `dates` / `months`), `ci`, `bulk`

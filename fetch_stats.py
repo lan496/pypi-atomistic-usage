@@ -304,7 +304,9 @@ AUTOMATION_BATCH_ROWS = 4_000_000
 # Installers that copy PyPI wholesale; pypistats excludes the same ones.
 MIRRORS = ["bandersnatch", "z3c.pypimirror", "Artifactory", "devpi", "Nexus"]
 PYPI = "https://pypi.org/pypi/{key}/json"
-CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo"
+# The demo user stops reading after 10^9 rows and by default returns what it has
+# read as if complete; read_overflow_mode=throw makes such a query fail instead.
+CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo&read_overflow_mode=throw"
 OUTPUT = Path(__file__).parent / "docs" / "data.js"
 PYPI_INTERVAL_S = 0.3
 ATTEMPTS = 4
@@ -347,6 +349,7 @@ def write_data(packages: dict[str, dict]) -> None:
     daily = fetch_series(keys, "date", first, last)
     monthly = fetch_series(keys, "toStartOfMonth(date)", date(2000, 1, 1), last)
     months = month_range(min(m for series in monthly.values() for m in series), last)
+    pypi_monthly = fetch_pypi_total(months, last)
     automation = fetch_automation(keys, daily, last)
 
     rows = []
@@ -382,6 +385,7 @@ def write_data(packages: dict[str, dict]) -> None:
         "automation_days": AUTOMATION_DAYS,
         "bulk_min": BULK_MIN,
         "categories": list(SEEDS),
+        "pypi_monthly": pypi_monthly,
         "packages": rows,
     }
     OUTPUT.write_text(f"window.PYPI_DATA = {json.dumps(payload, separators=(',', ':'))};\n")
@@ -416,6 +420,21 @@ def fetch_series(keys: list[str], period: str, first: date, last: date) -> dict[
         for p, os, n in row["points"]:
             series[row["project"]].setdefault(p, {})[os] = int(n)
     return series
+
+
+def fetch_pypi_total(months: list[str], last: date) -> list[float]:
+    """Downloads per day of all of PyPI within each month, as a baseline.
+
+    Only the per-month view is small enough to sum over every project within the
+    demo user's read limit; it includes mirrors (about 0.3% of PyPI downloads in
+    a month sampled) and has no split by system.
+    """
+    rows = clickpy(f"""
+        SELECT toString(month) AS m, sum(count) AS n FROM pypi.pypi_downloads_per_month
+        WHERE month BETWEEN '{months[0]}' AND '{last}' GROUP BY m
+    """)
+    totals = {row["m"]: int(row["n"]) for row in rows}
+    return [round(totals.get(m, 0) / days_counted(m, last), 1) for m in months]
 
 
 def fetch_automation(keys: list[str], daily: dict[str, dict], last: date) -> dict[str, dict]:
@@ -580,9 +599,13 @@ def http_get(url: str, data: bytes | None = None) -> bytes:
                     body = gzip.decompress(body)
                 return body
         except urllib.error.HTTPError as error:
-            detail = error.read()[:300].decode(errors="replace")
+            detail = error.read()
+            if error.headers.get("Content-Encoding") == "gzip":
+                detail = gzip.decompress(detail)
+            detail = detail[:300].decode(errors="replace")
             print(f"{url} failed ({error.code}): {detail}")
-            if error.code == 404 or attempt == ATTEMPTS - 1:
+            # a query over the read limit fails the same way every time
+            if error.code == 404 or "TOO_MANY_ROWS" in detail or attempt == ATTEMPTS - 1:
                 raise
             time.sleep(10 * 2**attempt)
         except (urllib.error.URLError, http.client.IncompleteRead) as error:
