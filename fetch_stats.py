@@ -1,16 +1,25 @@
-"""Collect daily PyPI download counts and write docs/data.js for docs/index.html.
+"""Collect PyPI download counts and write docs/data.js for docs/index.html.
 
-Download counts come from pypistats.org, which keeps 180 days of daily counts
-without mirror downloads. Its per-operating-system series is used, so that
-Linux (where CI and other automated installs run) can be told from macOS and
-Windows.
+All download counts come from ClickPy (https://clickpy.clickhouse.com), ClickHouse's
+public copy of the PyPI download logs and metadata, queried through its read-only
+demo user. The queries follow the materialized views of the ClickPy project
+(https://github.com/ClickHouse/clickpy, Apache-2.0).
 
 The package set is the curated SEEDS plus the most-downloaded packages that
-depend on them. The dependents are found by walking declared dependencies
-recursively in ClickPy (https://clickpy.clickhouse.com), ClickHouse's public
-copy of the PyPI metadata.
+depend on them, found by walking declared dependencies recursively.
+
+For each package the page gets
+- daily downloads over the last DAILY_DAYS days and monthly downloads over the
+  whole history, each split into all (mirrors excluded), Linux, and macOS + Windows;
+- the share of the last AUTOMATION_DAYS days' downloads that came from CI runs
+  and from bulk rebuilds of one pinned environment;
+- the GitHub owner (for the avatar) and the date of the first release, from PyPI.
+
+The demo user may run 60 queries and 600 s of execution time per hour; a run
+uses about 20 queries and 5 minutes. A refused run succeeds after the hour turns.
 """
 
+import http.client
 import json
 import re
 import time
@@ -19,7 +28,7 @@ import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
-# Category order fixes each category's colour in the dashboard (8 at most);
+# Category order fixes each category's colour in the dashboard (--c1 to --c8);
 # append categories, do not reorder them.
 SEEDS = {
     "Structure and symmetry": [
@@ -37,6 +46,10 @@ SEEDS = {
         "lobsterpy",
         "pymatviz",
         "pyiron",
+        # best-of-atomistic-machine-learning: visualization
+        "zndraw",
+        "atomvision",
+        "crystal-toolkit",
     ],
     "Machine-learning potentials": [
         "mace-torch",
@@ -62,8 +75,162 @@ SEEDS = {
         "matris",
         "tace",
         "eqnorm",
+        # best-of-atomistic-machine-learning: ml-iap and uip
+        "python-ace",
+        "megnet",
+        "sgdml",
+        "pyNNsMD",
+        "torchani",
+        "ccs_fit",
+        "kliff",
+        "pyxtal_ff",
+        "uf3",
+        "MEGNetSparse",
+        "calorine",
+        "apax",
+        "mlipx",
+        "autoplex",
+        "graph-pes",
+        "metatrain",
+        "matcalc",
+        "janus-core",
+        "aiida-mlip",
+        "m3gnet",
+        "pet-mad",
+        "ffonons",
     ],
-    "Molecular dynamics": ["openmm", "MDAnalysis"],
+    "Simulation engines and MD": [
+        "openmm",
+        "MDAnalysis",
+        # Python-installable engines tracked by atomistic.software
+        "pyscf",
+        "gpaw",
+        "lammps",
+        "BoltzTraP2",
+        "torchmd",
+        "xtb",
+        # best-of-atomistic-machine-learning: md
+        "jax-md",
+        "mlcolvar",
+    ],
+    # The three categories below hold the rest of
+    # best-of-atomistic-machine-learning (JuDFTteam), grouped from its categories.
+    "Representations and general ML tools": [
+        # rep-eng
+        "cmlkit",
+        "amp-atomistics",
+        "CBFV",
+        "dscribe",
+        "catlearn",
+        "benchml",
+        "skipatom",
+        "glasspy",
+        "pysipfenn",
+        "chemml",
+        "ElementEmbeddings",
+        "pdyna",
+        # rep-learn
+        "schnetpack",
+        "crabnet",
+        "e3nn",
+        "e3nn-jax",
+        "dgl",
+        "dgllife",
+        "kgcnn",
+        "escnn",
+        "atom2vec",
+        "dive-into-graphs",
+        "faenet",
+        "xtal2png",
+        # general-tool
+        "skmatter",
+        "maml",
+        "automatminer",
+        "matminer",
+        "jarvis-tools",
+        "xenonpy",
+        "qml",
+        "deepchem",
+        "rdkit",
+        "mlatom",
+        "molfeat",
+        "atomai",
+        # data-structures
+        "metatensor",
+        "dpdata",
+        "mp-pyrho",
+        # math
+        "sphericart",
+        "gpax",
+        "kfac-jax",
+        "cuequivariance",
+        "openequivariance",
+        # xai and unsupervised
+        "exmol",
+        "dadapy",
+        "mat_discover",
+        "pumml",
+    ],
+    "Datasets and benchmarks": [
+        "matbench",
+        "garden-ai",
+        "ml-peg",
+        "mpcontribs-client",
+        "atom3d",
+        "optimade",
+        "load-atoms",
+        "obelix-data",
+        "matpes",
+        "mpds_client",
+        "openqdc",
+    ],
+    "Generative, active-learning and other ML": [
+        # active-learning
+        "flare_pp",
+        "dpgen",
+        "ipsuite",
+        "Bgolearn",
+        # materials-discovery
+        "aalto-boss",
+        "agox",
+        "smact",
+        "care-crn",
+        # generative
+        "molecule-generation",
+        "synspace",
+        "gt4sd",
+        "moftransformer",
+        "simgen",
+        "slices",
+        # language-models
+        "paper-qa",
+        "nlcc",
+        "gptchem",
+        "chemcrow",
+        "chemdataextractor",
+        "chemnlp",
+        "chatmof",
+        "atomgpt",
+        "chembench",
+        # ml-dft, ml-esm, ml-wft
+        "ciderpress",
+        "dptb",
+        "deeperwin",
+        "deepqmc",
+    ],
+}
+# General-purpose seeds whose dependents are mostly outside atomistic simulation;
+# the dependents walk does not start from them.
+NO_WALK = {
+    "rdkit",
+    "dgl",
+    "deepchem",
+    "e3nn",
+    "e3nn-jax",
+    "escnn",
+    "kfac-jax",
+    "paper-qa",
+    "cuequivariance",
 }
 # GitHub owners of packages whose PyPI metadata links no GitHub repository.
 # ase and hiphive are hosted on GitLab and get no avatar.
@@ -75,17 +242,27 @@ GITHUB_OWNERS = {
     "nvalchemi-toolkit-ops": "NVIDIA",
     "openmm": "openmm",
 }
-N_PACKAGES = 100
-# The walk found 1357, 189, 51 and 2 new dependents per level on 2026-11-19. A
-# level far beyond that means a general-purpose seed, whose dependents would
-# not fit one query. The query returns at most one row more than this.
+N_DEPENDENTS = 60
+# A level far beyond the few thousand dependents the walk finds means a
+# general-purpose seed, whose dependents would not fit one query; add it to
+# NO_WALK. The query returns at most one row more than this.
 MAX_FRONTIER = 5000
-RANKING_DAYS = 180
-PYPISTATS = "https://pypistats.org/api/packages/{key}/system"
+DAILY_DAYS = 180
+AUTOMATION_DAYS = 28
+# Downloads of one version on one day from one identical environment (installer,
+# Python, OS, glibc, country) that count as a bulk rebuild of a pinned
+# environment rather than many users. The share flagged barely moves between
+# 1,000 and 10,000.
+BULK_MIN = 3000
+# Raw download rows per automation query, so that each stays well under the
+# demo user's 60 s limit per query.
+AUTOMATION_BATCH_ROWS = 4_000_000
+# Installers that copy PyPI wholesale; pypistats excludes the same ones.
+MIRRORS = ["bandersnatch", "z3c.pypimirror", "Artifactory", "devpi", "Nexus"]
 PYPI = "https://pypi.org/pypi/{key}/json"
 CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo"
 OUTPUT = Path(__file__).parent / "docs" / "data.js"
-REQUEST_INTERVAL_S = 2.0
+PYPI_INTERVAL_S = 0.3
 ATTEMPTS = 4
 
 
@@ -93,85 +270,175 @@ def main() -> None:
     seeds = seed_packages()
     dependents = find_dependents(seeds)
     print(f"{len(dependents)} packages depend on the {len(seeds)} seeds")
-    ranked = rank_by_downloads(list(dependents))
     kept = dict(seeds)
-    for key in ranked[: N_PACKAGES - len(seeds)]:
+    for key in rank_by_downloads(list(dependents))[:N_DEPENDENTS]:
         kept[key] = dependents[key]
     write_data(kept)
 
 
 def seed_packages() -> dict[str, dict]:
-    return {
-        normalize(name): {"name": name, "category": category, "via": None}
-        for category, names in SEEDS.items()
-        for name in names
-    }
+    seeds = {}
+    for category, names in SEEDS.items():
+        for name in names:
+            key = normalize(name)
+            if key in seeds:
+                raise ValueError(f"{name} is listed twice in SEEDS")
+            seeds[key] = {"name": name, "category": category, "via": None}
+    return seeds
 
 
 def write_data(packages: dict[str, dict]) -> None:
-    daily = {}
-    owners = {}
-    for key, info in packages.items():
-        daily[key] = fetch_daily(key)
-        owners[key] = GITHUB_OWNERS.get(key) or fetch_github_owner(key)
-        total = sum(sum(day.values()) for day in daily[key].values())
-        print(f"{info['name']}: {total} downloads, owner {owners[key]}")
-        time.sleep(REQUEST_INTERVAL_S)
+    keys = sorted(packages)
+    last = date.fromisoformat(clickpy("SELECT max(date) AS d FROM pypi.pypi_downloads_per_day")[0]["d"])
+    first = last - timedelta(days=DAILY_DAYS - 1)
+    dates = [first + timedelta(days=i) for i in range(DAILY_DAYS)]
+    daily = fetch_series(keys, "date", first, last)
+    monthly = fetch_series(keys, "toStartOfMonth(date)", date(2000, 1, 1), last)
+    months = month_range(min(m for series in monthly.values() for m in series), last)
+    automation = fetch_automation(keys, daily, last)
 
-    first = min(min(days) for days in daily.values())
-    last = max(max(days) for days in daily.values())
-    dates = [first + timedelta(days=i) for i in range((last - first).days + 1)]
+    rows = []
+    for key in keys:
+        info = packages[key]
+        meta = fetch_pypi(key)
+        time.sleep(PYPI_INTERVAL_S)
+        rows.append({
+            "name": info["name"],
+            "category": info["category"],
+            "via": info["via"],
+            "owner": GITHUB_OWNERS.get(key) or meta["owner"],
+            "since": meta["since"],
+            "daily": {
+                os: [daily[key].get(d.isoformat(), {}).get(os, 0) for d in dates]
+                for os in ("all", "linux", "desktop")
+            },
+            # downloads per day within each month; the last month may be partial
+            "monthly": {
+                os: [
+                    round(monthly[key].get(m, {}).get(os, 0) / days_counted(m, last), 1)
+                    for m in months
+                ]
+                for os in ("all", "linux", "desktop")
+            },
+            **automation.get(key, {"ci": None, "bulk": None}),
+        })
+        print(f"{info['name']}: owner {rows[-1]['owner']}, first release {meta['since']}")
+
     payload = {
         "fetched": date.today().isoformat(),
         "dates": [d.isoformat() for d in dates],
+        "months": [m[:7] for m in months],
+        "automation_days": AUTOMATION_DAYS,
+        "bulk_min": BULK_MIN,
         "categories": list(SEEDS),
-        "packages": [
-            {
-                "name": info["name"],
-                "category": info["category"],
-                "via": info["via"],
-                "owner": owners[key],
-                # pypistats omits days without downloads
-                "all": [sum(daily[key].get(d, {}).values()) for d in dates],
-                "linux": [daily[key].get(d, {}).get("Linux", 0) for d in dates],
-                "desktop": [
-                    daily[key].get(d, {}).get("Darwin", 0)
-                    + daily[key].get(d, {}).get("Windows", 0)
-                    for d in dates
-                ],
-            }
-            for key, info in packages.items()
-        ],
+        "packages": rows,
     }
-    OUTPUT.write_text(f"window.PYPI_DATA = {json.dumps(payload)};\n")
-    print(f"wrote {OUTPUT}: {len(packages)} packages, {dates[0]} to {dates[-1]}")
+    OUTPUT.write_text(f"window.PYPI_DATA = {json.dumps(payload, separators=(',', ':'))};\n")
+    print(f"wrote {OUTPUT}: {len(rows)} packages, {dates[0]} to {dates[-1]}, {months[0][:7]} on")
 
 
-def fetch_daily(key: str) -> dict[date, dict[str, int]]:
-    """Downloads per day by operating system (Linux, Darwin, Windows, other, null)."""
-    daily = {}
-    for row in json.loads(http_get(PYPISTATS.format(key=key)))["data"]:
-        day = daily.setdefault(date.fromisoformat(row["date"]), {})
-        day[row["category"]] = row["downloads"]
-    return daily
+def fetch_series(keys: list[str], period: str, first: date, last: date) -> dict[str, dict]:
+    """{key: {period start: {all, linux, desktop}}} summed over each period.
+
+    "all" excludes mirror installers; the per-system view cannot, so mirrors
+    (which report no system) stay out of Linux and macOS + Windows by themselves.
+    """
+    where = f"project IN {sql_tuple(keys)} AND date BETWEEN '{first}' AND '{last}'"
+    series = {key: {} for key in keys}
+    # One row per project, since the demo user gets at most 10,000 result rows.
+    for row in clickpy(f"""
+        SELECT project, groupArray((p, 'all', n)) AS points FROM (
+            SELECT project, toString({period}) AS p, sum(count) AS n
+            FROM pypi.pypi_downloads_per_day_by_version_by_installer_by_type
+            WHERE {where} AND installer NOT IN {sql_tuple(MIRRORS)}
+            GROUP BY project, p
+        ) GROUP BY project
+        UNION ALL
+        SELECT project, groupArray((p, os, n)) AS points FROM (
+            SELECT project, toString({period}) AS p,
+                   multiIf(system = 'Linux', 'linux', 'desktop') AS os, sum(count) AS n
+            FROM pypi.pypi_downloads_per_day_by_version_by_system
+            WHERE {where} AND system IN ('Linux', 'Darwin', 'Windows')
+            GROUP BY project, p, os
+        ) GROUP BY project
+    """):
+        for p, os, n in row["points"]:
+            series[row["project"]].setdefault(p, {})[os] = int(n)
+    return series
 
 
-def fetch_github_owner(key: str) -> str | None:
-    """GitHub organisation or user that hosts the package's repository, if any."""
-    info = json.loads(http_get(PYPI.format(key=key)))["info"]
+def fetch_automation(keys: list[str], daily: dict[str, dict], last: date) -> dict[str, dict]:
+    """Shares of CI and bulk-rebuild downloads over the last AUTOMATION_DAYS days.
+
+    These need the raw download rows, which cost a query per few million
+    downloads, so packages are batched by their recent download count.
+    """
+    first = last - timedelta(days=AUTOMATION_DAYS - 1)
+    recent = {
+        key: sum(v.get("all", 0) for d, v in daily[key].items() if d >= first.isoformat())
+        for key in keys
+    }
+    batches, batch, rows = [], [], 0
+    for key in sorted(keys, key=recent.get):
+        if batch and rows + recent[key] > AUTOMATION_BATCH_ROWS:
+            batches.append(batch)
+            batch, rows = [], 0
+        batch.append(key)
+        rows += recent[key]
+    batches.append(batch)
+
+    shares = {}
+    for i, batch in enumerate(batches, 1):
+        print(f"automation batch {i}/{len(batches)}: {len(batch)} packages")
+        # A cell is one day of one version's downloads from one identical environment.
+        for row in clickpy(f"""
+            SELECT project, sum(cell) AS n,
+                   sumIf(cell, flag = 'true') AS n_ci,
+                   sumIf(cell, flag != 'true' AND cell >= {BULK_MIN}) AS n_bulk
+            FROM (
+                SELECT project, ci AS flag, count() AS cell FROM pypi.pypi
+                WHERE project IN {sql_tuple(batch)}
+                  AND date BETWEEN '{first}' AND '{last}'
+                  AND installer NOT IN {sql_tuple(MIRRORS)}
+                  AND filename NOT LIKE '%.metadata'
+                GROUP BY project, date, installer, python_minor, system,
+                         country_code, flag, libc.version, version
+            )
+            GROUP BY project
+        """):
+            n = int(row["n"])
+            shares[row["project"]] = {
+                "ci": round(int(row["n_ci"]) / n, 3),
+                "bulk": round(int(row["n_bulk"]) / n, 3),
+            }
+    return shares
+
+
+def fetch_pypi(key: str) -> dict:
+    """GitHub owner of the repository, if any, and the date of the first upload."""
+    try:
+        meta = json.loads(http_get(PYPI.format(key=key)))
+    except urllib.error.HTTPError as error:
+        if error.code != 404:
+            raise
+        return {"owner": None, "since": None}
+    info = meta["info"]
+    uploads = [f["upload_time"] for files in meta["releases"].values() for f in files]
     urls = list((info["project_urls"] or {}).values()) + [info["home_page"] or ""]
+    owner = None
     for url in urls:
         match = re.search(r"github\.com/([A-Za-z0-9-]+)/[A-Za-z0-9_.-]+", url)
         if match and match.group(1).lower() != "sponsors":
-            return match.group(1)
-    return None
+            owner = match.group(1)
+            break
+    return {"owner": owner, "since": min(uploads)[:10] if uploads else None}
 
 
 def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
     """Walk dependents breadth-first; each inherits the category of its parent."""
     known = dict(seeds)
     found = {}
-    frontier = sorted(seeds)
+    frontier = sorted(key for key in seeds if key not in NO_WALK)
     depth = 0
     while frontier:
         depth += 1
@@ -179,7 +446,7 @@ def find_dependents(seeds: dict[str, dict]) -> dict[str, dict]:
         if len(rows) > MAX_FRONTIER:
             raise RuntimeError(
                 f"more than {MAX_FRONTIER} dependents at depth {depth}: a seed is "
-                "too general for the walk; remove it from SEEDS"
+                "too general for the walk; add it to NO_WALK"
             )
         level = {}
         for row in rows:
@@ -203,8 +470,8 @@ def rank_by_downloads(keys: list[str]) -> list[str]:
     rows = clickpy(
         f"""
         SELECT project FROM pypi.pypi_downloads_per_day
-        WHERE project IN {sql_tuple(keys)} AND date > today() - {RANKING_DAYS}
-        GROUP BY project ORDER BY sum(count) DESC LIMIT {N_PACKAGES}
+        WHERE project IN {sql_tuple(keys)} AND date > today() - {DAILY_DAYS}
+        GROUP BY project ORDER BY sum(count) DESC LIMIT {N_DEPENDENTS}
         """
     )
     return [row["project"] for row in rows]
@@ -239,25 +506,49 @@ def dependents_sql(frontier: list[str]) -> str:
 
 def clickpy(sql: str) -> list[dict]:
     body = http_get(CLICKPY, data=f"{sql} FORMAT JSONEachRow".encode())
-    return [json.loads(line) for line in body.splitlines() if line]
+    rows = [json.loads(line) for line in body.splitlines() if line]
+    # an error after the first rows arrives as a last row in place of data
+    if rows and "exception" in rows[-1]:
+        raise RuntimeError(f"ClickPy query failed: {rows[-1]['exception']}")
+    return rows
 
 
 def http_get(url: str, data: bytes | None = None) -> bytes:
     request = urllib.request.Request(
-        url, data=data, headers={"User-Agent": "pypi-stats-dashboard"}
+        url, data=data, headers={"User-Agent": "pypi-atomistic-usage"}
     )
-    # Both pypistats and the shared ClickPy endpoint refuse requests now and then.
+    # Both PyPI and the shared ClickPy endpoint refuse requests now and then.
     for attempt in range(ATTEMPTS):
         try:
-            with urllib.request.urlopen(request, timeout=120) as response:
+            with urllib.request.urlopen(request, timeout=300) as response:
                 return response.read()
         except urllib.error.HTTPError as error:
             detail = error.read()[:300].decode(errors="replace")
             print(f"{url} failed ({error.code}): {detail}")
             if error.code == 404 or attempt == ATTEMPTS - 1:
                 raise
-            time.sleep(10 * 2**attempt)
+        except (urllib.error.URLError, http.client.IncompleteRead) as error:
+            print(f"{url} failed: {error!r}")
+            if attempt == ATTEMPTS - 1:
+                raise
+        time.sleep(10 * 2**attempt)
     raise AssertionError("unreachable")
+
+
+def month_range(first: str, last: date) -> list[str]:
+    months = []
+    m = date.fromisoformat(first)
+    while m <= last:
+        months.append(m.isoformat())
+        m = (m + timedelta(days=32)).replace(day=1)
+    return months
+
+
+def days_counted(month: str, last: date) -> int:
+    """Days of the month covered by the data."""
+    start = date.fromisoformat(month)
+    end = min((start + timedelta(days=32)).replace(day=1) - timedelta(days=1), last)
+    return (end - start).days + 1
 
 
 def normalize(name: str) -> str:

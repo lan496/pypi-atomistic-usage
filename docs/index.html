@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PyPI downloads of atomistic-simulation Python packages</title>
+<title>Atomistic PyPI usage: downloads of atomistic-simulation Python packages</title>
+<meta name="description" content="Daily and monthly PyPI downloads of Python packages for atomistic simulation and atomistic machine learning, with CI and bulk-rebuild shares.">
+<meta property="og:title" content="Atomistic PyPI usage">
+<meta property="og:description" content="How much are atomistic-simulation Python packages used? PyPI downloads of about 200 packages, updated weekly.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='5' fill='%232a78d6'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%23eb6834' stroke-width='2'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%231baf7a' stroke-width='2' transform='rotate(60 16 16)'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='6' fill='none' stroke='%23eda100' stroke-width='2' transform='rotate(120 16 16)'/%3E%3C/svg%3E">
 <style>
 :root {
   color-scheme: light;
@@ -59,11 +64,30 @@ body {
   color: var(--text-primary);
   font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
 }
-main { max-width: 1120px; margin: 0 auto; }
-h1 { font-size: 20px; margin: 0 0 4px; }
+main { max-width: 1180px; margin: 0 auto; }
+a { color: var(--c1); }
+header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-start; margin-bottom: 16px; }
+header .intro { flex: 1 1 560px; }
+header nav { display: flex; gap: 8px; }
+header nav a {
+  color: var(--text-primary); text-decoration: none; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px;
+}
+header nav a:hover { background: var(--wash); }
+h1 { font-size: 22px; margin: 0 0 4px; }
 h2 { font-size: 15px; margin: 0; }
-.sub { color: var(--text-secondary); margin: 0 0 16px; }
-.filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; margin-bottom: 16px; }
+h3 { font-size: 14px; margin: 16px 0 4px; }
+.lead { color: var(--text-secondary); margin: 0 0 4px; max-width: 760px; }
+.sub { color: var(--text-muted); margin: 0; font-size: 12px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+.stat .label { color: var(--text-secondary); font-size: 12px; }
+.stat .value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat .detail { color: var(--text-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filters {
+  display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; margin-bottom: 16px;
+  position: sticky; top: 0; z-index: 2; padding: 8px 0; background: var(--page);
+}
 .filters label, .filters .group { display: flex; gap: 8px; align-items: center; color: var(--text-secondary); }
 .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 .seg button {
@@ -73,7 +97,7 @@ h2 { font-size: 15px; margin: 0; }
 .seg button + button { border-left: 1px solid var(--border); }
 .seg button:hover { background: var(--wash); }
 .seg button[aria-pressed="true"] { color: var(--text-primary); font-weight: 600; background: var(--wash); }
-select {
+select, input[type="search"] {
   font: inherit; color: var(--text-primary); background: var(--surface);
   border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
 }
@@ -125,11 +149,16 @@ select {
 table { border-collapse: collapse; width: 100%; }
 th, td { padding: 6px 10px; text-align: left; white-space: nowrap; }
 th { font-size: 12px; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--axis); }
+th[data-sort] { cursor: pointer; user-select: none; }
+th[data-sort]:hover { color: var(--text-primary); }
+th[aria-sort="descending"]::after { content: " \2193"; }
+th[aria-sort="ascending"]::after { content: " \2191"; }
 td { border-bottom: 1px solid var(--grid); }
 tbody tr:hover { background: var(--wash); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.cat { color: var(--text-secondary); }
-td.bar { width: 28%; min-width: 120px; }
+td.muted { color: var(--text-muted); }
+td.bar { width: 22%; min-width: 120px; }
 .bar-fill { height: 12px; min-width: 2px; border-radius: 0 4px 4px 0; }
 .icon { display: inline-block; width: 20px; height: 20px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
 span.icon { background: var(--wash); color: var(--text-muted); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
@@ -140,14 +169,30 @@ td a:hover { text-decoration: underline; }
 .up { color: var(--up); }
 .down { color: var(--down); }
 .spark { display: block; }
-footer { color: var(--text-secondary); font-size: 12px; }
-footer p { margin: 0 0 4px; }
+.about { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 32px; color: var(--text-secondary); }
+.about p { margin: 0 0 8px; }
+footer { color: var(--text-muted); font-size: 12px; text-align: center; margin: 24px 0 8px; }
 </style>
 </head>
 <body>
 <main>
-  <h1>PyPI downloads of atomistic-simulation Python packages</h1>
-  <p class="sub" id="sub"></p>
+  <header>
+    <div class="intro">
+      <h1>Atomistic PyPI usage</h1>
+      <p class="lead">How much are the Python packages of atomistic simulation and atomistic machine learning used?
+        Daily PyPI downloads of <span id="n-pk"></span> packages: a curated list, the Python packages of
+        <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>
+        and <a href="https://atomistic.software">atomistic.software</a>, and the most-downloaded packages that depend on them.</p>
+      <p class="sub" id="sub"></p>
+    </div>
+    <nav>
+      <a href="#about">About</a>
+      <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md">Add a package</a>
+      <a href="https://github.com/lan496/pypi-atomistic-usage">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="stats" id="stats"></div>
 
   <div class="filters">
     <div class="group">Period
@@ -155,11 +200,12 @@ footer p { margin: 0 0 4px; }
         <button type="button" data-v="30">30 days</button>
         <button type="button" data-v="90">90 days</button>
         <button type="button" data-v="180">180 days</button>
+        <button type="button" data-v="0">All years</button>
       </div>
     </div>
     <div class="group">Packages
       <div class="seg" id="set">
-        <button type="button" data-v="curated">Curated</button>
+        <button type="button" data-v="curated">Listed</button>
         <button type="button" data-v="all">With dependents</button>
       </div>
     </div>
@@ -184,15 +230,16 @@ footer p { margin: 0 0 4px; }
         <button type="button" data-v="linear">Linear</button>
       </div>
     </div>
+    <label>Find <input type="search" id="q" placeholder="package name" size="14"></label>
   </div>
 
   <section class="card">
     <div class="card-head">
-      <h2>Downloads per day (7-day rolling mean)</h2>
+      <h2 id="chart-title"></h2>
       <div class="legend" id="legend"></div>
     </div>
     <div class="chart-wrap">
-      <svg id="chart" height="420" tabindex="0" role="img"
+      <svg id="chart" height="440" tabindex="0" role="img"
            aria-label="Downloads per day for each package over time. Left and right arrow keys move the date, up and down arrow keys select a package. The table below carries the same totals."></svg>
       <div id="tooltip"></div>
     </div>
@@ -200,7 +247,7 @@ footer p { margin: 0 0 4px; }
 
   <section class="card">
     <div class="card-head">
-      <h2>Bar chart race: downloads per day (7-day rolling mean)</h2>
+      <h2 id="race-title"></h2>
       <div class="race-ctl">
         <button type="button" id="race-play">Play</button>
         <input type="range" id="race-pos" aria-label="Date shown in the bar chart race">
@@ -213,19 +260,22 @@ footer p { margin: 0 0 4px; }
   <section class="card">
     <div class="card-head">
       <h2>Downloads in the period</h2>
-      <p class="note">Hover a row to highlight that package in the chart above. The chart names its 25 largest lines at their right ends.</p>
+      <p class="note">Click a column to sort. Hover a row to highlight that package in the chart.</p>
     </div>
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Package</th>
-            <th>Category</th>
-            <th>Found via</th>
-            <th class="num">Total</th>
+            <th data-sort="name">Package</th>
+            <th data-sort="category">Category</th>
+            <th data-sort="via">Found via</th>
+            <th data-sort="since">First release</th>
+            <th class="num" data-sort="total">Total</th>
             <th></th>
-            <th class="num">Per day</th>
-            <th class="num">vs. preceding period</th>
+            <th class="num" data-sort="perDay">Per day</th>
+            <th class="num" data-sort="change" id="change-head"></th>
+            <th class="num" data-sort="ci" id="ci-head" title="Share of downloads whose installer reported a CI run">CI</th>
+            <th class="num" data-sort="bulk" id="bulk-head">Bulk rebuilds</th>
             <th>Trend (own scale per row)</th>
           </tr>
         </thead>
@@ -234,18 +284,46 @@ footer p { margin: 0 0 4px; }
     </div>
   </section>
 
-  <footer>
-    <p>Source: the daily per-operating-system series of pypistats.org, mirror downloads excluded. pypistats keeps 180 days.</p>
-    <p>pypistats does not say which downloads come from CI. CI services and other automated installs run almost entirely on Linux, so "macOS + Windows" leaves them out; it also leaves out real use on Linux workstations and clusters, and is therefore a floor on interactive use, not an estimate of it.</p>
-    <p>The counts measure installs rather than users. Installs from outside PyPI, such as conda-forge, are not counted.</p>
-    <p>"Curated" is a hand-picked list. "With dependents" adds the most-downloaded packages whose latest release requires a listed package, directly or through other dependents, according to the PyPI metadata; a dependency declared only in an optional extra does not count. A dependent takes the category of the package it was found through. Icons are the GitHub organization or user that hosts the repository.</p>
-  </footer>
+  <section class="card" id="about">
+    <h2>About</h2>
+    <div class="about">
+      <div>
+        <h3>Data</h3>
+        <p>Download counts come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, ClickHouse's public copy of the PyPI download logs, which goes back to 2016.
+          "All" leaves out installers that mirror PyPI wholesale (bandersnatch, devpi, Nexus, Artifactory, z3c.pypimirror).
+          The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
+          The data are refreshed weekly.</p>
+        <h3>Packages</h3>
+        <p>"Listed" packages are a hand-picked list, every PyPI package of
+          <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>,
+          and the simulation engines of <a href="https://atomistic.software">atomistic.software</a> that install from PyPI.
+          "With dependents" adds the most-downloaded packages whose latest release requires a listed package, directly or through other dependents; a dependency declared only in an optional extra does not count, and general-purpose libraries such as RDKit and DGL are not followed.
+          A dependent takes the category of the package it was found through.
+          <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md">Suggest a package.</a></p>
+      </div>
+      <div>
+        <h3>Downloads are not users</h3>
+        <p>CI services, container builds and cluster jobs install packages over and over, so download counts measure installs, not people.
+          Two columns of the table estimate this over the last <span class="auto-days"></span> days.
+          <b>CI</b> is the share whose installer reported a CI run; pip and uv report one when a variable such as <code>CI</code> is set, as on GitHub Actions and GitLab CI.
+          <b>Bulk rebuilds</b> is the share that came, without a CI flag, from one pinned environment downloading the same version at least <span id="bulk-min"></span> times on one day (same installer, Python, OS, glibc and country): a Docker image or batch job rebuilt many times rather than many users.</p>
+        <p>Automated installs run almost entirely on Linux, so "macOS + Windows" leaves them out; it also leaves out real use on Linux workstations and clusters, and is therefore a floor on interactive use, not an estimate of it.
+          Installs from outside PyPI, such as conda-forge, are not counted.</p>
+        <h3>Credits</h3>
+        <p>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
+          Queries follow <a href="https://github.com/ClickHouse/clickpy">ClickPy</a> (Apache-2.0).
+          Icons are the GitHub organization or user that hosts each repository.</p>
+      </div>
+    </div>
+  </section>
+  <footer id="footer"></footer>
 </main>
 
 <script src="data.js"></script>
 <script>
 const D = window.PYPI_DATA;
 const N = D.dates.length;
+const NM = D.months.length;
 const ROLL = 7;
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -256,43 +334,70 @@ const TOOLTIP_ROWS = 20;
 const RACE_ROWS = 12;
 const RACE_ROW_H = 28;
 const RACE_STEP_MS = 150;
+const OS = ["all", "linux", "desktop"];
+
+// days of each month covered by the data; the last month may be partial
+const MONTH_DAYS = D.months.map((m) => {
+  const [y, mo] = m.split("-").map(Number);
+  const end = new Date(Date.UTC(y, mo, 0)).toISOString().slice(0, 10);
+  const last = D.dates[N - 1];
+  return Number((end < last ? end : last).slice(8));
+});
 
 const PK = D.packages.map((p) => ({
-  name: p.name,
-  category: p.category,
-  via: p.via,
-  owner: p.owner,
-  series: { all: p.all, linux: p.linux, desktop: p.desktop },
+  ...p,
   color: `var(--c${D.categories.indexOf(p.category) + 1})`,
+  roll: Object.fromEntries(OS.map((os) => [os, rolling(p.daily[os])])),
 }));
-for (const p of PK) {
-  p.roll = { all: rolling(p.series.all), linux: rolling(p.series.linux), desktop: rolling(p.series.desktop) };
-}
+// the first month with any download, where "All years" starts
+const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
-const state = { days: 90, os: "all", set: "all", cat: "", lines: 25, scale: "log", hl: null, cursor: null };
+const state = {
+  days: 90, os: "all", set: "all", cat: "", lines: 25, scale: "log", q: "",
+  sort: "total", desc: true, hl: null, cursor: null,
+};
 const chart = document.getElementById("chart");
 const tooltip = document.getElementById("tooltip");
 // what the current chart shows: packages, their paths, and the scales
 let view = null;
-// bar chart race: the day shown, the playback timer, and each package's row
-const race = { i: N - 1, timer: null, rows: new Map() };
+// bar chart race: the point shown, the playback timer, and each package's row
+const race = { i: null, timer: null, rows: new Map() };
 
 init();
 
 function init() {
+  document.getElementById("n-pk").textContent = PK.length;
   document.getElementById("sub").textContent =
-    `${D.dates[0]} to ${D.dates[N - 1]}, ${PK.length} packages. Fetched ${D.fetched}.`;
+    `Daily data ${D.dates[0]} to ${D.dates[N - 1]}, monthly from ${D.months[FIRST_MONTH]}. Fetched ${D.fetched}.`;
+  document.getElementById("footer").textContent = `Data fetched ${D.fetched} from ClickPy and PyPI.`;
+  document.getElementById("bulk-min").textContent = full(D.bulk_min);
+  for (const node of document.querySelectorAll(".auto-days")) node.textContent = D.automation_days;
+  document.getElementById("ci-head").textContent = `CI, ${D.automation_days} d`;
+  document.getElementById("bulk-head").textContent = `Bulk rebuilds, ${D.automation_days} d`;
+  document.getElementById("bulk-head").title =
+    `Share of downloads of the last ${D.automation_days} days from one environment downloading one version at least ${full(D.bulk_min)} times a day`;
 
   const cat = document.getElementById("cat");
   cat.append(new Option("All", ""));
   for (const c of D.categories) cat.append(new Option(c, c));
   cat.addEventListener("change", () => { state.cat = cat.value; renderAll(); });
+  const q = document.getElementById("q");
+  q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); renderAll(); });
 
   bindSeg("days", Number);
   bindSeg("os", String);
   bindSeg("set", String);
   bindSeg("lines", Number);
   bindSeg("scale", String);
+
+  for (const th of document.querySelectorAll("th[data-sort]")) {
+    th.addEventListener("click", () => {
+      const key = th.dataset.sort;
+      state.desc = state.sort === key ? !state.desc : !["name", "category", "via", "since"].includes(key);
+      state.sort = key;
+      renderTable();
+    });
+  }
 
   const legend = document.getElementById("legend");
   D.categories.forEach((c, i) => {
@@ -310,8 +415,6 @@ function init() {
   window.addEventListener("resize", renderChart);
 
   const pos = document.getElementById("race-pos");
-  pos.min = ROLL - 1;
-  pos.max = N - 1;
   pos.addEventListener("input", () => { stopRace(); race.i = Number(pos.value); drawRace(); });
   document.getElementById("race-play").addEventListener("click", () => (race.timer ? stopRace() : playRace()));
   renderAll();
@@ -320,52 +423,126 @@ function init() {
 function renderAll() {
   state.hl = null;
   state.cursor = null;
+  renderStats();
   renderChart();
   renderRace();
   renderTable();
 }
 
+// The time axis of the chosen period: daily 7-day means, or monthly means per day.
+function axis() {
+  if (state.days) {
+    return {
+      labels: D.dates, n: N, start: N - state.days, first: ROLL - 1,
+      values: (p) => p.roll[state.os],
+      label: (i) => `7-day mean ending ${D.dates[i]}`,
+    };
+  }
+  return {
+    labels: D.months, n: NM, start: FIRST_MONTH, first: FIRST_MONTH,
+    values: (p) => p.monthly[state.os],
+    label: (i) => `Mean per day in ${D.months[i]}${i === NM - 1 ? " (to date)" : ""}`,
+  };
+}
+
+// Downloads of a package over the chosen period, and over the period before it.
+function totals(p) {
+  if (state.days) {
+    const s = p.daily[state.os];
+    const start = N - state.days;
+    const prev = start - state.days >= 0 ? sum(s, start - state.days, start) : null;
+    return { total: sum(s, start, N), prev, days: state.days };
+  }
+  const s = p.monthly[state.os];
+  const monthTotal = (i) => s[i] * MONTH_DAYS[i];
+  let total = 0;
+  let days = 0;
+  for (let i = FIRST_MONTH; i < NM; i++) { total += monthTotal(i); days += MONTH_DAYS[i]; }
+  // last 12 months against the 12 before them
+  let last12 = 0;
+  let prev12 = 0;
+  for (let i = NM - 12; i < NM; i++) last12 += monthTotal(i);
+  for (let i = NM - 24; i < NM - 12; i++) prev12 += monthTotal(i);
+  return { total, days, change: prev12 > 0 ? last12 / prev12 - 1 : null };
+}
+
 // packages passing the filters, largest period total first
 function visible() {
-  const start = N - state.days;
   return PK
-    .filter((p) => (state.set === "all" || p.via === null) && (!state.cat || p.category === state.cat))
-    .map((p) => ({ p, total: sum(p.series[state.os], start, N) }))
+    .filter((p) => (state.set === "all" || p.via === null)
+      && (!state.cat || p.category === state.cat)
+      && (!state.q || p.name.toLowerCase().includes(state.q)))
+    .map((p) => {
+      const t = totals(p);
+      const change = state.days ? (t.prev > 0 ? t.total / t.prev - 1 : null) : t.change;
+      return { p, total: t.total, perDay: t.total / t.days, change };
+    })
     .sort((a, b) => b.total - a.total);
+}
+
+// ---- headline numbers ----
+
+function renderStats() {
+  const rows = visible();
+  const total = rows.reduce((s, r) => s + r.total, 0);
+  const withChange = rows.filter((r) => r.change !== null && r.total > 1000);
+  const riser = withChange.sort((a, b) => b.change - a.change)[0];
+  const listed = PK.filter((p) => p.via === null).length;
+  const period = state.days ? `last ${state.days} days` : `since ${D.months[FIRST_MONTH]}`;
+  const box = document.getElementById("stats");
+  box.replaceChildren(
+    stat("Packages shown", full(rows.length), `${listed} listed, ${PK.length - listed} dependents in the data`),
+    stat("Downloads", compact(total), `${period}, ${platformName()}`),
+    stat("Most downloaded", rows[0] ? rows[0].p.name : "-", rows[0] ? `${compact(rows[0].perDay)} per day` : ""),
+    stat("Fastest growing", riser ? riser.p.name : "-",
+      riser ? `${pct(riser.change, true)} ${state.days ? "vs. preceding period" : "last 12 months vs. the 12 before"}` : ""),
+  );
+}
+
+function stat(label, value, detail) {
+  return el("div", { class: "stat" },
+    el("div", { class: "label" }, label), el("div", { class: "value" }, value), el("div", { class: "detail", title: detail }, detail));
+}
+
+function platformName() {
+  return { all: "all platforms", linux: "Linux", desktop: "macOS + Windows" }[state.os];
 }
 
 // ---- line chart ----
 
 function renderChart() {
+  const ax = axis();
+  document.getElementById("chart-title").textContent = state.days
+    ? "Downloads per day (7-day rolling mean)" : "Downloads per day (monthly mean)";
   const ranked = visible().map((r) => r.p);
   const pk = state.lines ? ranked.slice(0, state.lines) : ranked;
   const W = chart.clientWidth;
   const H = Number(chart.getAttribute("height"));
-  const start = N - state.days;
+  const span = Math.max(1, ax.n - 1 - ax.start);
   const pw = W - M.left - M.right;
   const ph = H - M.top - M.bottom;
   chart.setAttribute("viewBox", `0 0 ${W} ${H}`);
   chart.replaceChildren();
 
-  const vals = pk.flatMap((p) => p.roll[state.os].slice(start).filter((v) => v !== null));
-  const axis = state.scale === "log" ? logAxis(vals) : linearAxis(vals);
-  const x = (i) => M.left + ((i - start) / (state.days - 1)) * pw;
-  const y = (v) => M.top + ph - axis.t(v) * ph;
+  const vals = pk.flatMap((p) => ax.values(p).slice(ax.start).filter((v) => v !== null));
+  const scale = state.scale === "log" ? logAxis(vals) : linearAxis(vals);
+  const x = (i) => M.left + ((i - ax.start) / span) * pw;
+  const y = (v) => M.top + ph - scale.t(v) * ph;
 
-  for (const tick of axis.ticks) {
+  for (const tick of scale.ticks) {
     const ty = y(tick);
     chart.append(svg("line", { x1: M.left, x2: W - M.right, y1: ty, y2: ty, stroke: "var(--grid)" }));
     chart.append(svg("text", { x: M.left - 8, y: ty + 4, "text-anchor": "end" }, compact(tick)));
   }
   chart.append(svg("line", { x1: M.left, x2: W - M.right, y1: M.top + ph, y2: M.top + ph, stroke: "var(--axis)" }));
-  for (const [i, label] of xTicks(start)) {
+  for (const [i, label] of xTicks(ax)) {
     chart.append(svg("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, label));
   }
 
   const paths = new Map();
   for (const p of pk) {
     const path = svg("path", {
-      d: linePath(p.roll[state.os], start, x, y),
+      d: linePath(ax.values(p), ax.start, x, y),
       fill: "none",
       stroke: p.color,
       "stroke-width": 2,
@@ -375,10 +552,10 @@ function renderChart() {
     paths.set(p.name, path);
     chart.append(path);
   }
-  const labels = endLabels(pk.slice(0, MAX_LABELS), y, ph);
+  const labels = endLabels(pk.slice(0, MAX_LABELS), ax, y, ph);
   for (const label of labels) {
     chart.append(svg("line", {
-      x1: W - M.right, y1: y(label.p.roll[state.os][N - 1]), x2: W - M.right + 10, y2: label.y,
+      x1: W - M.right, y1: y(ax.values(label.p)[ax.n - 1]), x2: W - M.right + 10, y2: label.y,
       stroke: label.p.color, opacity: 0.6,
     }));
     label.text = svg("text", { x: W - M.right + 14, y: label.y + 4, class: "end-label" }, label.p.name);
@@ -386,13 +563,13 @@ function renderChart() {
   }
   const hover = svg("g");
   chart.append(hover);
-  view = { pk, paths, labels, hover, start, x, y, pw, ph, W };
+  view = { ax, pk, paths, labels, hover, span, x, y, pw, ph, W };
   renderHover();
 }
 
 // Restyles the lines and redraws only the hover layer; the paths are not rebuilt.
 function renderHover() {
-  const { pk, paths, labels, hover, x, y, ph } = view;
+  const { ax, pk, paths, labels, hover, x, y, ph } = view;
   for (const [name, path] of paths) {
     const isHl = name === state.hl;
     path.setAttribute("stroke-width", isHl ? 3 : 2);
@@ -415,9 +592,9 @@ function renderHover() {
   }
   const cx = x(state.cursor);
   hover.append(svg("line", { x1: cx, x2: cx, y1: M.top, y2: M.top + ph, stroke: "var(--axis)" }));
-  if (hl && hl.roll[state.os][state.cursor] !== null) {
+  if (hl && ax.values(hl)[state.cursor] !== null) {
     hover.append(svg("circle", {
-      cx, cy: y(hl.roll[state.os][state.cursor]), r: 5, fill: hl.color,
+      cx, cy: y(ax.values(hl)[state.cursor]), r: 5, fill: hl.color,
       stroke: "var(--surface)", "stroke-width": 2,
     }));
   }
@@ -425,8 +602,8 @@ function renderHover() {
 }
 
 // Label positions at the line ends, pushed apart so that names do not overlap.
-function endLabels(pk, y, ph) {
-  const labels = pk.map((p) => ({ p, y: y(p.roll[state.os][N - 1]) })).sort((a, b) => a.y - b.y);
+function endLabels(pk, ax, y, ph) {
+  const labels = pk.map((p) => ({ p, y: y(ax.values(p)[ax.n - 1]) })).sort((a, b) => a.y - b.y);
   for (let k = 1; k < labels.length; k++) {
     labels[k].y = Math.max(labels[k].y, labels[k - 1].y + LABEL_GAP);
   }
@@ -439,8 +616,9 @@ function endLabels(pk, y, ph) {
 }
 
 function renderTooltip(cx) {
+  const { ax } = view;
   const i = state.cursor;
-  const ranked = view.pk.filter((p) => p.roll[state.os][i] !== null).sort((a, b) => b.roll[state.os][i] - a.roll[state.os][i]);
+  const ranked = view.pk.filter((p) => ax.values(p)[i] !== null).sort((a, b) => ax.values(b)[i] - ax.values(a)[i]);
   const rows = ranked.slice(0, TOOLTIP_ROWS);
   const hl = ranked.find((p) => p.name === state.hl);
   if (hl && !rows.includes(hl)) rows.push(hl);
@@ -450,9 +628,9 @@ function renderTooltip(cx) {
     const key = el("i", { class: "key" });
     key.style.background = p.color;
     list.append(el("div", { class: p.name === state.hl ? "row hl" : "row" },
-      key, el("b", {}, full(p.roll[state.os][i])), icon(p), p.name));
+      key, el("b", {}, full(ax.values(p)[i])), icon(p), p.name));
   }
-  tooltip.replaceChildren(el("div", { class: "date" }, `7-day mean ending ${D.dates[i]}`), list);
+  tooltip.replaceChildren(el("div", { class: "date" }, ax.label(i)), list);
   if (ranked.length > rows.length) {
     tooltip.append(el("div", { class: "more" }, `and ${ranked.length - rows.length} smaller ones, listed in the table`));
   }
@@ -463,11 +641,12 @@ function renderTooltip(cx) {
 }
 
 function onPointer(ev) {
+  const { ax } = view;
   const box = chart.getBoundingClientRect();
   const px = ev.clientX - box.left;
   const py = ev.clientY - box.top;
   const rel = (px - M.left) / view.pw;
-  const i = view.start + Math.round(Math.min(1, Math.max(0, rel)) * (state.days - 1));
+  const i = ax.start + Math.round(Math.min(1, Math.max(0, rel)) * view.span);
   let best = null;
   let bestDist = Infinity;
   if (px > M.left + view.pw + 8) {
@@ -478,8 +657,8 @@ function onPointer(ev) {
     }
   } else {
     for (const p of view.pk) {
-      if (p.roll[state.os][i] === null) continue;
-      const dist = Math.abs(view.y(p.roll[state.os][i]) - py);
+      if (ax.values(p)[i] === null) continue;
+      const dist = Math.abs(view.y(ax.values(p)[i]) - py);
       if (dist < bestDist) { best = p.name; bestDist = dist; }
     }
   }
@@ -490,14 +669,15 @@ function onPointer(ev) {
 }
 
 function onKey(ev) {
-  if (state.cursor === null) state.cursor = N - 1;
+  const { ax } = view;
+  if (state.cursor === null) state.cursor = ax.n - 1;
   const ranked = view.pk
-    .filter((p) => p.roll[state.os][state.cursor] !== null)
-    .sort((a, b) => b.roll[state.os][state.cursor] - a.roll[state.os][state.cursor])
+    .filter((p) => ax.values(p)[state.cursor] !== null)
+    .sort((a, b) => ax.values(b)[state.cursor] - ax.values(a)[state.cursor])
     .map((p) => p.name);
   const at = ranked.indexOf(state.hl);
-  if (ev.key === "ArrowLeft") state.cursor = Math.max(view.start, ROLL - 1, state.cursor - 1);
-  else if (ev.key === "ArrowRight") state.cursor = Math.min(N - 1, state.cursor + 1);
+  if (ev.key === "ArrowLeft") state.cursor = Math.max(ax.start, ax.first, state.cursor - 1);
+  else if (ev.key === "ArrowRight") state.cursor = Math.min(ax.n - 1, state.cursor + 1);
   else if (ev.key === "ArrowDown") state.hl = ranked[Math.min(ranked.length - 1, at + 1)];
   else if (ev.key === "ArrowUp") state.hl = ranked[Math.max(0, at - 1)];
   else if (ev.key === "Escape") { state.cursor = null; state.hl = null; }
@@ -516,6 +696,15 @@ function clearHover() {
 
 // One row per package passing the filters; drawRace() moves and resizes them.
 function renderRace() {
+  stopRace();
+  const ax = axis();
+  document.getElementById("race-title").textContent = state.days
+    ? "Bar chart race: downloads per day (7-day rolling mean)" : "Bar chart race: downloads per day (monthly mean)";
+  const pos = document.getElementById("race-pos");
+  pos.min = Math.max(ax.first, ax.start);
+  pos.max = ax.n - 1;
+  race.ax = ax;
+  race.i = ax.n - 1;
   const box = document.getElementById("race");
   box.replaceChildren();
   box.style.height = `${RACE_ROWS * RACE_ROW_H}px`;
@@ -534,8 +723,9 @@ function renderRace() {
 }
 
 function drawRace() {
+  const { ax } = race;
   const ranked = [...race.rows.keys()]
-    .map((p) => ({ p, v: p.roll[state.os][race.i] ?? 0 }))
+    .map((p) => ({ p, v: ax.values(p)[race.i] ?? 0 }))
     .sort((a, b) => b.v - a.v);
   const max = Math.max(ranked.length ? ranked[0].v : 0, 1);
   ranked.forEach(({ p, v }, rank) => {
@@ -546,17 +736,19 @@ function drawRace() {
     fill.style.width = `calc((100% - 90px) * ${v / max})`;
     value.textContent = full(v);
   });
-  document.getElementById("race-date").textContent = D.dates[race.i];
+  document.getElementById("race-date").textContent = ax.labels[race.i];
   document.getElementById("race-pos").value = race.i;
 }
 
 function playRace() {
-  if (race.i >= N - 1) race.i = ROLL - 1;
+  const { ax } = race;
+  const first = Math.max(ax.first, ax.start);
+  if (race.i >= ax.n - 1) race.i = first;
   document.getElementById("race-play").textContent = "Pause";
   race.timer = setInterval(() => {
     race.i += 1;
     drawRace();
-    if (race.i >= N - 1) stopRace();
+    if (race.i >= ax.n - 1) stopRace();
   }, RACE_STEP_MS);
 }
 
@@ -569,33 +761,48 @@ function stopRace() {
 // ---- table ----
 
 function renderTable() {
-  const start = N - state.days;
+  const ax = axis();
+  document.getElementById("change-head").textContent = state.days ? "vs. preceding period" : "Last 12 months vs. 12 before";
+  for (const th of document.querySelectorAll("th[data-sort]")) {
+    th.setAttribute("aria-sort", th.dataset.sort === state.sort ? (state.desc ? "descending" : "ascending") : "none");
+  }
   const rows = visible();
   const max = Math.max(...rows.map((r) => r.total), 1);
+  const key = {
+    name: (r) => r.p.name.toLowerCase(), category: (r) => r.p.category, via: (r) => r.p.via ?? "",
+    since: (r) => r.p.since ?? "", total: (r) => r.total, perDay: (r) => r.perDay,
+    change: (r) => r.change ?? -Infinity, ci: (r) => r.p.ci ?? -1, bulk: (r) => r.p.bulk ?? -1,
+  }[state.sort];
+  rows.sort((a, b) => {
+    const [ka, kb] = [key(a), key(b)];
+    const order = ka < kb ? -1 : ka > kb ? 1 : 0;
+    return state.desc ? -order : order;
+  });
 
   const body = document.getElementById("rows");
   body.replaceChildren();
-  for (const { p, total } of rows) {
-    const prev = start - state.days >= 0 ? sum(p.series[state.os], start - state.days, start) : 0;
+  for (const { p, total, perDay, change } of rows) {
     const link = el("a", { href: `https://pypi.org/project/${p.name}/` }, p.name);
     const fill = el("div", { class: "bar-fill" });
     fill.style.width = `${(total / max) * 100}%`;
     fill.style.background = p.color;
     const delta = el("td", { class: "num" }, "-");
-    if (prev > 0) {
-      const change = total / prev - 1;
-      delta.textContent = `${change >= 0 ? "+" : "-"}${Math.abs(change * 100).toFixed(1)}%`;
+    if (change !== null) {
+      delta.textContent = pct(change, true);
       delta.classList.add(change >= 0 ? "up" : "down");
     }
     const tr = el("tr", {},
       el("td", {}, icon(p), link),
       el("td", { class: "cat" }, p.category),
-      el("td", { class: "cat" }, p.via ?? "curated"),
+      el("td", { class: "cat" }, p.via ?? "listed"),
+      el("td", { class: "cat" }, p.since ?? "-"),
       el("td", { class: "num" }, full(total)),
       el("td", { class: "bar" }, fill),
-      el("td", { class: "num" }, full(total / state.days)),
+      el("td", { class: "num" }, full(perDay)),
       delta,
-      el("td", {}, sparkline(p.roll[state.os].slice(start))));
+      el("td", { class: "num muted" }, p.ci === null ? "-" : pct(p.ci)),
+      el("td", { class: "num muted" }, p.bulk === null ? "-" : pct(p.bulk)),
+      el("td", {}, sparkline(ax.values(p).slice(Math.max(ax.start, ax.first)))));
     tr.addEventListener("pointerenter", () => {
       if (!view.paths.has(p.name)) return;
       state.hl = p.name;
@@ -611,7 +818,7 @@ function sparkline(values) {
   const h = 24;
   const max = Math.max(...values.filter((v) => v !== null), 1);
   const node = svg("svg", { width: w, height: h, class: "spark", "aria-hidden": "true" });
-  const x = (i) => 1 + (i / (values.length - 1)) * (w - 2);
+  const x = (i) => 1 + (i / Math.max(1, values.length - 1)) * (w - 2);
   const y = (v) => h - 2 - (v / max) * (h - 4);
   node.append(svg("path", {
     d: linePath(values, 0, x, y), fill: "none", stroke: "var(--text-muted)",
@@ -662,16 +869,20 @@ function linearAxis(vals) {
   return { ticks, t: (v) => v / top };
 }
 
-// every seventh day up to 30 days, month starts beyond
-function xTicks(start) {
+// every seventh day up to 30 days, month starts up to 180 days, years beyond
+function xTicks(ax) {
   const ticks = [];
-  if (state.days <= 30) {
-    for (let i = N - 1; i >= start; i -= 7) {
+  if (!state.days) {
+    for (let i = ax.start; i < ax.n; i++) {
+      if (D.months[i].endsWith("-01")) ticks.push([i, D.months[i].slice(0, 4)]);
+    }
+  } else if (state.days <= 30) {
+    for (let i = N - 1; i >= ax.start; i -= 7) {
       const [, m, d] = D.dates[i].split("-");
       ticks.push([i, `${MONTHS[Number(m) - 1]} ${Number(d)}`]);
     }
   } else {
-    for (let i = start; i < N; i++) {
+    for (let i = ax.start; i < N; i++) {
       const [, m, d] = D.dates[i].split("-");
       if (d === "01") ticks.push([i, MONTHS[Number(m) - 1]]);
     }
@@ -693,6 +904,7 @@ function linePath(values, offset, x, y) {
 
 function compact(n) {
   const short = (v, unit) => `${v >= 100 ? Math.round(v) : Number(v.toFixed(1))}${unit}`;
+  if (n >= 1e9) return short(n / 1e9, "B");
   if (n >= 1e6) return short(n / 1e6, "M");
   if (n >= 1e3) return short(n / 1e3, "K");
   return String(Math.round(n));
@@ -700,6 +912,11 @@ function compact(n) {
 
 function full(n) {
   return Math.round(n).toLocaleString("en-US");
+}
+
+function pct(x, signed = false) {
+  const sign = signed ? (x >= 0 ? "+" : "-") : "";
+  return `${sign}${Math.abs(x * 100).toFixed(signed ? 1 : 0)}%`;
 }
 
 function bindSeg(id, parse) {
