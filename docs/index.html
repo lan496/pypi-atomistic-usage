@@ -41,7 +41,7 @@
 }
 /* figure export adds .export to draw in the light colours whatever the theme */
 @media (prefers-color-scheme: dark) {
-  :root:not(.export) {
+  :root:not(.export):not(.light) {
     color-scheme: dark;
     --page: #0d0d0d;
     --surface: #171716;
@@ -309,6 +309,30 @@ a.pkg-link:hover text { fill: var(--text-primary); text-decoration: underline; }
 .more-btn:hover { background: var(--wash); }
 .more-row[hidden] { display: none; }
 
+/* ---- share dialog ---- */
+.share-dlg {
+  width: min(560px, calc(100vw - 32px)); padding: 18px 20px; color: var(--text-primary); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+.share-dlg::backdrop { background: rgba(0, 0, 0, 0.3); }
+.share-dlg label { display: block; margin: 14px 0 4px; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.share-dlg .field { display: flex; gap: 6px; align-items: flex-start; }
+.share-dlg :is(input, textarea) {
+  flex: 1; min-width: 0; resize: none; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text-primary); background: var(--raised); border: 1px solid var(--border); border-radius: 7px; padding: 5px 8px;
+}
+.share-dlg .dlg-foot { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+/* ---- one figure alone (#panel=...), for embedding in other pages ---- */
+.solo body { background: var(--surface); }
+.solo main { max-width: none; padding: 0; }
+.solo .off { display: none !important; }
+.solo .split { display: block; }
+.solo .card { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+.solo .hint { display: none; }
+.solo-foot { margin: 0; padding: 0 20px 10px; font-size: 11px; color: var(--text-muted); }
+.solo-foot a { color: inherit; }
+
 /* ---- about ---- */
 .about { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 32px; color: var(--text-secondary); }
 .about p { margin: 0 0 10px; }
@@ -403,7 +427,7 @@ footer a { color: inherit; }
     <div class="chips" id="cats" role="group" aria-label="Category"></div>
   </div>
 
-  <section class="card">
+  <section class="card" data-panel="era">
     <div class="card-head">
       <div>
         <h2>The field over time</h2>
@@ -422,7 +446,7 @@ footer a { color: inherit; }
          aria-label="Stacked area chart of downloads per day of each category per month since 2016."></svg>
   </section>
 
-  <section class="card">
+  <section class="card" data-panel="growth">
     <div class="card-head">
       <div>
         <h2>Rising and fading</h2>
@@ -442,7 +466,7 @@ footer a { color: inherit; }
   </section>
 
   <div class="split even">
-    <section class="card">
+    <section class="card" data-panel="adopt">
       <div class="card-head">
         <div>
           <h2>How fast packages took off</h2>
@@ -453,7 +477,7 @@ footer a { color: inherit; }
       <svg id="adopt" class="plot" height="336" role="img"
            aria-label="Downloads per day of the top packages against months since their first release."></svg>
     </section>
-    <section class="card">
+    <section class="card" data-panel="race">
       <div class="card-head">
         <div>
           <h2>Bar chart race</h2>
@@ -474,7 +498,7 @@ footer a { color: inherit; }
   </div>
 
   <div class="split">
-    <section class="card">
+    <section class="card" data-panel="deps">
       <div class="card-head">
         <div>
           <h2>Built on top</h2>
@@ -497,18 +521,19 @@ footer a { color: inherit; }
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-panel="share">
       <div class="card-head">
         <div>
           <h2>Downloads by category</h2>
           <p class="note" id="share-note"></p>
         </div>
+        <div class="tools"></div>
       </div>
       <div id="share"></div>
     </section>
   </div>
 
-  <section class="card">
+  <section class="card" data-panel="chart">
     <div class="card-head">
       <div>
         <h2 id="chart-title"></h2>
@@ -524,7 +549,7 @@ footer a { color: inherit; }
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" data-panel="table">
     <div class="card-head">
       <div>
         <h2>Ranking</h2>
@@ -561,7 +586,8 @@ footer a { color: inherit; }
     <div class="about">
       <div>
         <h3>Data</h3>
-        <p>Download counts come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, ClickHouse's public copy of the PyPI download logs, which goes back to 2016.
+        <p>Download counts come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, ClickHouse's public copy of the PyPI download logs, which goes back to 2016;
+          the logs are <a href="https://docs.pypi.org/api/bigquery/">PyPI's download statistics</a>, licensed CC BY 4.0, and are shown here aggregated.
           "All" leaves out installers that mirror PyPI wholesale (bandersnatch, devpi, Nexus, Artifactory, z3c.pypimirror).
           The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
           The data are refreshed monthly.</p>
@@ -586,8 +612,11 @@ footer a { color: inherit; }
       </div>
       <div>
         <h3>Using the figures</h3>
+        <p>The figures and the numbers behind them are free to reuse, also commercially, in papers, slides and web pages, under
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>: credit "Atomistic PyPI usage" with a link, as in How to cite.</p>
         <p>Each chart downloads as PNG or SVG, drawn in light colours with its title, the filters in use and the data source, ready for a slide; CSV gives the numbers behind it.
           The bar chart race records as a 1280x720 video (MP4 or WebM, depending on the browser) in real time; keep the tab in view while it records.
+          Share gives a link to one figure alone and the code to embed it in another web page; both keep the filters in use and follow the monthly refresh, so cite a download rather than an embed where the numbers must not change.
           The address bar keeps the current view, so a link reproduces it.</p>
         <p>PyPI as a whole has grown too, and much of that growth is automated installs.
           The baseline of all of PyPI (ClickPy's monthly totals over every project, all platforms, mirrors included) shows whether the field grew faster than that:
@@ -604,11 +633,26 @@ footer a { color: inherit; }
     <span id="footer"></span>
     <span>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
       Data from <a href="https://clickpy.clickhouse.com">ClickPy</a> by ClickHouse, Inc., queried as in the <a href="https://github.com/ClickHouse/clickpy">ClickPy source</a> (Apache-2.0); not affiliated with ClickHouse or ClickPy.
-      Icons are the GitHub owner of each repository.</span>
+      Icons are the GitHub owner of each repository.
+      Figures and data <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, code MIT.</span>
   </footer>
 </main>
 
 <div class="tip" id="tip"></div>
+<dialog class="share-dlg" id="share-dlg">
+  <form method="dialog">
+    <h2 id="share-title"></h2>
+    <p class="note">Free to reuse, also commercially, with the credit below (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
+      The link and the embed keep the filters in use and follow the monthly refresh; add <code>&amp;theme=light</code> to the link for light colours.</p>
+    <label for="share-link">Link to this figure alone</label>
+    <div class="field"><input id="share-link" readonly><button type="button" class="more-btn" data-copy="share-link">Copy</button></div>
+    <label for="share-embed">Embed in a web page</label>
+    <div class="field"><textarea id="share-embed" rows="3" readonly></textarea><button type="button" class="more-btn" data-copy="share-embed">Copy</button></div>
+    <label for="share-credit">Credit</label>
+    <div class="field"><textarea id="share-credit" rows="2" readonly></textarea><button type="button" class="more-btn" data-copy="share-credit">Copy</button></div>
+    <div class="dlg-foot"><button class="more-btn">Close</button></div>
+  </form>
+</dialog>
 <script src="data.js"></script>
 <script>
 const D = window.PYPI_DATA;
@@ -633,6 +677,11 @@ const VIDEO_W = 1280;
 const VIDEO_H = 720;
 const VIDEO_FPS = 30;
 const SITE = "lan496.github.io/pypi-atomistic-usage";
+const LICENSE = "CC BY 4.0";
+const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
+const SHARE_ICON = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7 7 5M4.2 5.6 3 6.8a1.9 1.9 0 0 0 2.7 2.7l1.2-1.2M7.8 6.4 9 5.2a1.9 1.9 0 0 0-2.7-2.7L5.1 3.7"/></svg>';
+// the figures that a link can show alone, by their data-panel name
+const PANELS = [...document.querySelectorAll("[data-panel]")].map((n) => n.dataset.panel);
 const PAUSE_ICON ='<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/></svg>';
 
 // days of each month covered by the data; the last month may be partial
@@ -657,7 +706,7 @@ const PK = D.packages.map((p) => ({
 // the first month with any download, where "All years" starts
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
-const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "" };
+const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "", panel: "", theme: "" };
 const state = { ...DEFAULTS, sort: "total", desc: true, all: false, hl: null, cursor: null };
 // colour of each package in the current view; see assignColors()
 let colors = new Map();
@@ -668,6 +717,8 @@ const chart = document.getElementById("chart");
 const tooltip = document.getElementById("tooltip");
 // what the current chart shows: packages, their paths, and the scales
 let view = null;
+// the figure shown alone (#panel=...) and the credit line under it; null on the full page
+let solo = null;
 // bar chart race: the point shown, the playback timer, and each package's row
 const race = { i: null, timer: null, rows: new Map() };
 
@@ -688,9 +739,11 @@ function init() {
     `Share of downloads of the last ${D.automation_days} days from one environment downloading one version at least ${full(D.bulk_min)} times a day`;
 
   document.getElementById("cite").textContent =
-    `Atomistic PyPI usage, ${location.origin}${location.pathname} (data fetched ${D.fetched} from ClickPy). Source code: https://github.com/lan496/pypi-atomistic-usage.`;
+    `Atomistic PyPI usage, ${location.origin}${location.pathname} (data fetched ${D.fetched} from ClickPy), ${LICENSE}. Source code: https://github.com/lan496/pypi-atomistic-usage.`;
 
   readHash();
+  document.documentElement.classList.toggle("light", state.theme === "light");
+  if (state.panel) enterSolo();
   const q = document.getElementById("q");
   q.value = state.q;
   q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); renderAll(); });
@@ -714,6 +767,16 @@ function init() {
       b.addEventListener("click", () => exportFig(box.dataset.fig, kind));
       box.append(b);
     }
+  }
+
+  for (const card of document.querySelectorAll("[data-panel]")) {
+    const b = el("button", { type: "button", title: "Link to this figure alone, or embed it in another page" });
+    b.innerHTML = `${SHARE_ICON}Share`;
+    b.addEventListener("click", () => openShare(card));
+    card.querySelector(".card-head .tools").append(b);
+  }
+  for (const b of document.querySelectorAll("#share-dlg [data-copy]")) {
+    b.addEventListener("click", () => copyField(b));
   }
 
   for (const th of document.querySelectorAll("th[data-sort]")) {
@@ -763,6 +826,12 @@ function renderAll() {
 
 // the SVG charts, which are redrawn on resize
 function renderPlots() {
+  drawPlots();
+  // shown alone, the plot is drawn again at the height its heading and credit leave free
+  if (solo && fitSolo()) drawPlots();
+}
+
+function drawPlots() {
   renderChart();
   renderEra();
   renderGrowth();
@@ -792,16 +861,30 @@ function readHash() {
   pick("scale", ["log", "linear"]);
   pick("mode", ["abs", "pypi", "share"]);
   pick("cat", D.categories);
+  pick("panel", PANELS);
+  pick("theme", ["light"]);
   if (h.has("q")) state.q = h.get("q").toLowerCase();
 }
 
 function writeHash() {
+  const hash = hashOf(state);
+  history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
+  if (solo) solo.home.href = viewUrl({ panel: "", theme: "" });
+}
+
+// The URL fragment of a view: the settings that differ from the defaults.
+function hashOf(s) {
   const h = new URLSearchParams();
   for (const [key, value] of Object.entries(DEFAULTS)) {
-    if (state[key] !== value) h.set(key, state[key]);
+    if (s[key] !== value) h.set(key, s[key]);
   }
-  const hash = h.toString();
-  history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
+  return h.toString();
+}
+
+// The address of the current view with some settings replaced.
+function viewUrl(changes) {
+  const hash = hashOf({ ...state, ...changes });
+  return `${location.href.split("#")[0]}${hash ? `#${hash}` : ""}`;
 }
 
 function setCat(c) {
@@ -1317,7 +1400,7 @@ function drawRaceFrame(ctx, f, t) {
   ctx.fillText(f.ax.labels[Math.round(t)], W - pad, H - 64);
   ctx.font = `14px ${f.font}`;
   ctx.textAlign = "left";
-  ctx.fillText(`Data: PyPI downloads via ClickPy, fetched ${D.fetched}. ${SITE}`, pad, H - 24);
+  ctx.fillText(creditLine(), pad, H - 24);
 }
 
 function setPlay(playing) {
@@ -1776,8 +1859,7 @@ function figureSvg(src, title, notes, legend) {
   plot.removeAttribute("tabindex");
   for (const [k, v] of Object.entries({ x: pad, y, width: W, height: H })) plot.setAttribute(k, v);
   const footY = y + H + 22;
-  parts.push(plot, svg("text", { x: pad, y: footY, "font-size": 11, fill: ink.muted },
-    `Data: PyPI downloads via ClickPy, fetched ${D.fetched}. ${SITE}`));
+  parts.push(plot, svg("text", { x: pad, y: footY, "font-size": 11, fill: ink.muted }, creditLine()));
   const w = W + 2 * pad;
   const h = footY + pad - 8;
   for (const [k, v] of Object.entries({ width: w, height: h, viewBox: `0 0 ${w} ${h}` })) node.setAttribute(k, v);
@@ -1792,6 +1874,61 @@ function inlineStyles(src, dst) {
     dst.style.setProperty(prop, cs.getPropertyValue(prop));
   }
   [...src.children].forEach((child, k) => inlineStyles(child, dst.children[k]));
+}
+
+// The source and licence line at the foot of an exported figure.
+function creditLine() {
+  return `Data: PyPI download statistics (CC BY 4.0) via ClickPy, fetched ${D.fetched}. ${SITE}, ${LICENSE}`;
+}
+
+// ---- sharing one figure ----
+
+// Hides everything but the figure named in #panel=..., with a credit line under it, for an iframe.
+function enterSolo() {
+  const panel = document.querySelector(`[data-panel="${state.panel}"]`);
+  document.documentElement.classList.add("solo");
+  for (const node of document.querySelectorAll("main > *, .split > *")) node.classList.toggle("off", !node.contains(panel));
+  const home = el("a", {}, "Atomistic PyPI usage");
+  const foot = el("p", { class: "solo-foot" },
+    home, `. Data: PyPI download statistics via ClickPy, fetched ${D.fetched}. `, el("a", { href: LICENSE_URL }, LICENSE), ".");
+  document.querySelector("main").append(foot);
+  // links leave the embedding page alone
+  document.head.append(el("base", { target: "_blank" }));
+  solo = { panel, foot, home };
+}
+
+// Gives the plot of the figure shown alone the height left in the window; true if it changed.
+function fitSolo() {
+  const plot = solo.panel.querySelector("svg.plot, svg#chart");
+  if (!plot) return false;
+  const rest = solo.panel.offsetHeight - plot.getBoundingClientRect().height + solo.foot.offsetHeight;
+  const h = Math.max(240, Math.floor(innerHeight - rest));
+  if (h === Number(plot.getAttribute("height"))) return false;
+  plot.setAttribute("height", h);
+  return true;
+}
+
+function openShare(card) {
+  const title = card.querySelector("h2").textContent;
+  const url = viewUrl({ panel: card.dataset.panel });
+  const attr = (v) => v.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+  document.getElementById("share-title").textContent = `Share "${title}"`;
+  document.getElementById("share-link").value = url;
+  document.getElementById("share-embed").value =
+    `<iframe src="${attr(url)}" title="${attr(title)}" width="100%" height="${Math.ceil(card.offsetHeight + 28)}" style="border: 0" loading="lazy"></iframe>`;
+  document.getElementById("share-credit").value =
+    `"${title}", Atomistic PyPI usage, ${url}, ${LICENSE}. Data: PyPI download statistics via ClickPy, fetched ${D.fetched}.`;
+  document.getElementById("share-dlg").showModal();
+}
+
+// Copies a field of the share dialog; where the clipboard is refused, the text stays selected.
+function copyField(button) {
+  const field = document.getElementById(button.dataset.copy);
+  field.select();
+  Promise.resolve()
+    .then(() => navigator.clipboard.writeText(field.value))
+    .then(() => { button.textContent = "Copied"; }, () => { button.textContent = "Selected"; });
+  setTimeout(() => { button.textContent = "Copy"; }, 1500);
 }
 
 function download(blob, name) {
