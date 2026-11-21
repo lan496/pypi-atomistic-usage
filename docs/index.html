@@ -41,6 +41,8 @@
 
   <div class="toolbar" id="toolbar">
     <div class="controls">
+      <span class="scope">For every figure below</span>
+      <button type="button" class="reset" id="reset" hidden>Reset</button>
       <div class="ctl">Period
         <div class="seg" id="days">
           <button type="button" data-v="30">30d</button>
@@ -69,12 +71,14 @@
           <button type="button" data-v="linear">Linear</button>
         </div>
       </div>
+    </div>
+    <div class="filter-row">
+      <div class="chips" id="cats" role="group" aria-label="Category"></div>
       <label class="search">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5 14 14"/></svg>
         <input type="search" id="q" placeholder="Find a package" aria-label="Find a package">
       </label>
     </div>
-    <div class="chips" id="cats" role="group" aria-label="Category"></div>
   </div>
 
   <section class="card" data-panel="era">
@@ -322,6 +326,19 @@ const PK = D.packages.map((p) => ({
 // the first month with any download, where "All years" starts
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
+// the toolbar settings, which every figure follows in part
+const PAGE_SETTINGS = ["days", "os", "cat", "lines", "scale", "q"];
+// which of them each figure follows; the field over time and rising and fading span whole years
+const PANEL_USES = {
+  era: ["os", "cat", "q"],
+  growth: ["os", "cat", "q"],
+  adopt: ["days", "os", "cat", "q"],
+  race: ["days", "os", "cat", "q"],
+  deps: ["days", "os", "cat", "q"],
+  share: ["days", "os", "q"],
+  chart: ["days", "os", "cat", "q", "lines", "scale"],
+  table: ["days", "os", "cat", "q"],
+};
 const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "", panel: "", theme: "", snapshot: "" };
 const state = { ...DEFAULTS, sort: "total", desc: true, all: false, hl: null, cursor: null };
 // colour of each package in the current view; see assignColors()
@@ -335,6 +352,8 @@ const tooltip = document.getElementById("tooltip");
 let view = null;
 // the figure shown alone (#panel=...) and the credit line under it; null on the full page
 let solo = null;
+// keep the toolbar's buttons in step with the state; see bindSeg()
+const segSyncs = [];
 // the figure in the share dialog and which data its link keeps
 const share = { card: null, kind: "latest" };
 // bar chart race: the point shown, the playback timer, and each package's row
@@ -366,6 +385,14 @@ function init() {
   q.value = state.q;
   q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); renderAll(); });
 
+  for (const card of document.querySelectorAll("[data-panel]")) {
+    card.querySelector("h2").after(el("p", { class: "uses", "aria-label": "Settings this figure follows" }));
+  }
+  document.getElementById("reset").addEventListener("click", () => {
+    for (const key of PAGE_SETTINGS) state[key] = DEFAULTS[key];
+    q.value = "";
+    renderAll();
+  });
   bindSeg("days", Number);
   bindSeg("os", String);
   bindSeg("lines", Number);
@@ -437,7 +464,9 @@ function renderAll() {
   state.cursor = null;
   assignColors();
   writeHash();
+  for (const sync of segSyncs) sync();
   syncChips();
+  renderUses();
   renderStats();
   renderPlots();
   renderRace();
@@ -1880,11 +1909,39 @@ function pct(x, signed = false) {
   return `${sign}${Math.abs(x * 100).toFixed(signed ? 1 : 0)}%`;
 }
 
+// Shows on each figure the toolbar settings it follows, marking those changed from the defaults.
+function renderUses() {
+  document.getElementById("reset").hidden = PAGE_SETTINGS.every((key) => state[key] === DEFAULTS[key]);
+  for (const card of document.querySelectorAll("[data-panel]")) {
+    const box = card.querySelector(".uses");
+    const before = new Map([...box.children].map((n) => [n.dataset.key, n.textContent]));
+    box.replaceChildren(...PANEL_USES[card.dataset.panel]
+      .filter((key) => key !== "q" || state.q)
+      .map((key) => {
+        const label = settingLabel(key);
+        const changed = before.has(key) && before.get(key) !== label;
+        return el("span", {
+          "data-key": key,
+          class: `${state[key] !== DEFAULTS[key] ? "set" : ""}${changed ? " flash" : ""}`.trim(),
+        }, label);
+      }));
+  }
+}
+
+function settingLabel(key) {
+  if (key === "days") return state.days ? `Last ${state.days} days` : "All years";
+  if (key === "os") return { all: "All platforms", linux: "Linux", desktop: "macOS + Windows" }[state.os];
+  if (key === "cat") return state.cat || "All categories";
+  if (key === "q") return `Matching "${state.q}"`;
+  if (key === "lines") return state.lines ? `Top ${state.lines}` : "All packages";
+  return state.scale === "log" ? "Log scale" : "Linear scale";
+}
+
 function bindSeg(id, parse) {
   const buttons = [...document.getElementById(id).querySelectorAll("button")];
   const sync = () => buttons.forEach((b) => b.setAttribute("aria-pressed", String(parse(b.dataset.v) === state[id])));
-  buttons.forEach((b) => b.addEventListener("click", () => { state[id] = parse(b.dataset.v); sync(); renderAll(); }));
-  sync();
+  buttons.forEach((b) => b.addEventListener("click", () => { state[id] = parse(b.dataset.v); renderAll(); }));
+  segSyncs.push(sync);
 }
 
 function el(tag, attrs = {}, ...children) {

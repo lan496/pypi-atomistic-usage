@@ -127,14 +127,31 @@ h1 span { color: var(--text-muted); }
 }
 .seg button:hover { color: var(--text-primary); }
 .seg button[aria-pressed="true"] { color: var(--text-primary); background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
-.search { margin-left: auto; position: relative; }
+.search { margin-left: auto; position: relative; flex: none; }
+.scope { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.reset {
+  font: inherit; font-size: 12px; color: var(--text-secondary); background: transparent; cursor: pointer;
+  border: 1px solid var(--border); border-radius: 9px; padding: 2px 8px;
+}
+.reset:hover { color: var(--text-primary); background: var(--wash); }
+.reset[hidden] { display: none; }
+/* the toolbar settings a figure follows, under its title */
+.uses { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0 2px; }
+.uses span {
+  font-size: 11px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; padding: 0 8px;
+}
+.uses span.set { color: var(--c1); border-color: color-mix(in srgb, var(--c1) 45%, transparent); background: color-mix(in srgb, var(--c1) 8%, transparent); font-weight: 600; }
+.uses span.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { from { background: color-mix(in srgb, var(--c1) 35%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .uses span.flash { animation: none; } }
 .search svg { position: absolute; left: 9px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: var(--text-muted); }
 input[type="search"] {
   font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface);
-  border: 1px solid var(--border); border-radius: 9px; padding: 5px 10px 5px 28px; width: 200px;
+  border: 1px solid var(--border); border-radius: 9px; padding: 5px 10px 5px 28px; width: 160px;
 }
 input[type="search"]:focus { outline: 2px solid color-mix(in srgb, var(--c1) 40%, transparent); outline-offset: 1px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.filter-row { display: flex; gap: 8px 16px; align-items: flex-start; margin-top: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
   font: inherit; font-size: 12px; color: var(--text-secondary); cursor: pointer;
   display: inline-flex; align-items: center; gap: 6px;
@@ -344,6 +361,7 @@ footer a { color: inherit; }
   /* too tall to keep on screen at this width */
   .toolbar { position: static; margin: 0 -14px 12px; padding: 8px 14px; }
   .topbar nav a span { display: none; }
+  .filter-row { flex-wrap: wrap; }
   .search { margin-left: 0; width: 100%; }
   input[type="search"] { width: 100%; }
   .card { padding: 14px; }
