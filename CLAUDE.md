@@ -67,3 +67,8 @@ Each package: `name`, `category`, `via` (`null` for listed seeds; shown as
 "Found via"), `owner`, `since`, `daily` and `monthly`
 (each `{all, linux, desktop}` aligned with `dates` / `months`), `ci`, `bulk`
 (shares or `null`). Changing a field means editing both files.
+
+Each refresh also writes a frozen copy to `docs/snapshots/<fetched>.js`, which
+`#snapshot=<fetched>` links load instead of `data.js` ("Fixed" share links).
+Snapshots are never rewritten, so `index.html` must keep reading old ones: add
+fields as optional, never rename or drop one.

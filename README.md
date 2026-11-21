@@ -43,8 +43,10 @@ the materialized views of [ClickPy](https://github.com/ClickHouse/clickpy)
 
 Every figure has a Share button that gives a link to that figure alone
 (`#panel=<name>`, keeping the filters in use; add `&theme=light` for light
-colours) and an `<iframe>` code to embed it in another web page. Figures also
-download as PNG, SVG and CSV.
+colours) and an `<iframe>` code to embed it in another web page. A "Latest"
+link follows the monthly refresh; a "Fixed" link (`#snapshot=<date>`) keeps the
+data of one refresh for good, from the copies in `docs/snapshots/`. Figures
+also download as PNG, SVG and CSV.
 
 ## License
 

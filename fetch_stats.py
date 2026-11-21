@@ -308,6 +308,8 @@ PYPI = "https://pypi.org/pypi/{key}/json"
 # read as if complete; read_overflow_mode=throw makes such a query fail instead.
 CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo&read_overflow_mode=throw"
 OUTPUT = Path(__file__).parent / "docs" / "data.js"
+# a frozen copy of each refresh, named by its fetch date, for links that keep their numbers
+SNAPSHOTS = OUTPUT.parent / "snapshots"
 PYPI_INTERVAL_S = 0.3
 ATTEMPTS = 4
 
@@ -388,7 +390,10 @@ def write_data(packages: dict[str, dict]) -> None:
         "pypi_monthly": pypi_monthly,
         "packages": rows,
     }
-    OUTPUT.write_text(f"window.PYPI_DATA = {json.dumps(payload, separators=(',', ':'))};\n")
+    text = f"window.PYPI_DATA = {json.dumps(payload, separators=(',', ':'))};\n"
+    OUTPUT.write_text(text)
+    SNAPSHOTS.mkdir(exist_ok=True)
+    (SNAPSHOTS / f"{payload['fetched']}.js").write_text(text)
     print(f"wrote {OUTPUT}: {len(rows)} packages, {dates[0]} to {dates[-1]}, {months[0][:7]} on")
 
 

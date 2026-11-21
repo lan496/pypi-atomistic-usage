@@ -616,7 +616,8 @@ footer a { color: inherit; }
           <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>: credit "Atomistic PyPI usage" with a link, as in How to cite.</p>
         <p>Each chart downloads as PNG or SVG, drawn in light colours with its title, the filters in use and the data source, ready for a slide; CSV gives the numbers behind it.
           The bar chart race records as a 1280x720 video (MP4 or WebM, depending on the browser) in real time; keep the tab in view while it records.
-          Share gives a link to one figure alone and the code to embed it in another web page; both keep the filters in use and follow the monthly refresh, so cite a download rather than an embed where the numbers must not change.
+          Share gives a link to one figure alone and the code to embed it in another web page, keeping the filters in use.
+          Either follows the monthly refresh ("Latest") or stays on the data of one refresh for good ("Fixed"), for papers and slides whose numbers must not change.
           The address bar keeps the current view, so a link reproduces it.</p>
         <p>PyPI as a whole has grown too, and much of that growth is automated installs.
           The baseline of all of PyPI (ClickPy's monthly totals over every project, all platforms, mirrors included) shows whether the field grew faster than that:
@@ -643,7 +644,13 @@ footer a { color: inherit; }
   <form method="dialog">
     <h2 id="share-title"></h2>
     <p class="note">Free to reuse, also commercially, with the credit below (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
-      The link and the embed keep the filters in use and follow the monthly refresh; add <code>&amp;theme=light</code> to the link for light colours.</p>
+      Both keep the filters in use; add <code>&amp;theme=light</code> to the link for light colours.</p>
+    <label>Data</label>
+    <div class="seg" id="share-kind">
+      <button type="button" data-v="latest" title="Follows the monthly refresh">Latest</button>
+      <button type="button" data-v="fixed" id="share-fixed" title="Keeps the numbers of this refresh for good"></button>
+    </div>
+    <p class="note" id="share-kind-note"></p>
     <label for="share-link">Link to this figure alone</label>
     <div class="field"><input id="share-link" readonly><button type="button" class="more-btn" data-copy="share-link">Copy</button></div>
     <label for="share-embed">Embed in a web page</label>
@@ -653,7 +660,15 @@ footer a { color: inherit; }
     <div class="dlg-foot"><button class="more-btn">Close</button></div>
   </form>
 </dialog>
-<script src="data.js"></script>
+<script>
+// #snapshot=YYYY-MM-DD loads the frozen data of that refresh instead of the latest
+const SNAPSHOT = (location.hash.match(/[#&]snapshot=(\d{4}-\d{2}-\d{2})(?=&|$)/) || [])[1] || "";
+document.write(`<script src="${SNAPSHOT ? `snapshots/${SNAPSHOT}.js` : "data.js"}"><\/script>`);
+</script>
+<script>
+// a snapshot that does not exist falls back to the latest data
+if (!window.PYPI_DATA) document.write('<script src="data.js"><\/script>');
+</script>
 <script>
 const D = window.PYPI_DATA;
 const N = D.dates.length;
@@ -706,7 +721,7 @@ const PK = D.packages.map((p) => ({
 // the first month with any download, where "All years" starts
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
-const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "", panel: "", theme: "" };
+const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "", panel: "", theme: "", snapshot: "" };
 const state = { ...DEFAULTS, sort: "total", desc: true, all: false, hl: null, cursor: null };
 // colour of each package in the current view; see assignColors()
 let colors = new Map();
@@ -719,6 +734,8 @@ const tooltip = document.getElementById("tooltip");
 let view = null;
 // the figure shown alone (#panel=...) and the credit line under it; null on the full page
 let solo = null;
+// the figure in the share dialog and which data its link keeps
+const share = { card: null, kind: "latest" };
 // bar chart race: the point shown, the playback timer, and each package's row
 const race = { i: null, timer: null, rows: new Map() };
 
@@ -727,7 +744,6 @@ init();
 function init() {
   const listed = PK.filter((p) => p.via === null).length;
   document.getElementById("n-pk").textContent = PK.length;
-  document.getElementById("fresh").textContent = `Updated monthly · data to ${D.dates[N - 1]}`;
   document.getElementById("sub").textContent =
     `${listed} listed packages and ${PK.length - listed} dependents. Daily data ${D.dates[0]} to ${D.dates[N - 1]}, monthly from ${D.months[FIRST_MONTH]}.`;
   document.getElementById("footer").textContent = `Data fetched ${D.fetched} from ClickPy and PyPI.`;
@@ -742,6 +758,12 @@ function init() {
     `Atomistic PyPI usage, ${location.origin}${location.pathname} (data fetched ${D.fetched} from ClickPy), ${LICENSE}. Source code: https://github.com/lan496/pypi-atomistic-usage.`;
 
   readHash();
+  const fresh = document.getElementById("fresh");
+  if (state.snapshot) {
+    fresh.append(`Fixed to the refresh of ${D.fetched}, data to ${D.dates[N - 1]}. `, el("a", { class: "latest-link" }, "See the latest"));
+  } else {
+    fresh.textContent = `${SNAPSHOT ? `No snapshot of ${SNAPSHOT}; showing the latest. ` : ""}Updated monthly · data to ${D.dates[N - 1]}`;
+  }
   document.documentElement.classList.toggle("light", state.theme === "light");
   if (state.panel) enterSolo();
   const q = document.getElementById("q");
@@ -774,6 +796,10 @@ function init() {
     b.innerHTML = `${SHARE_ICON}Share`;
     b.addEventListener("click", () => openShare(card));
     card.querySelector(".card-head .tools").append(b);
+  }
+  document.getElementById("share-fixed").textContent = `Fixed to ${D.fetched}`;
+  for (const b of document.querySelectorAll("#share-kind button")) {
+    b.addEventListener("click", () => { share.kind = b.dataset.v; fillShare(); });
   }
   for (const b of document.querySelectorAll("#share-dlg [data-copy]")) {
     b.addEventListener("click", () => copyField(b));
@@ -863,6 +889,8 @@ function readHash() {
   pick("cat", D.categories);
   pick("panel", PANELS);
   pick("theme", ["light"]);
+  // the snapshot loaded, if it was found
+  if (SNAPSHOT === D.fetched) state.snapshot = SNAPSHOT;
   if (h.has("q")) state.q = h.get("q").toLowerCase();
 }
 
@@ -870,6 +898,7 @@ function writeHash() {
   const hash = hashOf(state);
   history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
   if (solo) solo.home.href = viewUrl({ panel: "", theme: "" });
+  for (const a of document.querySelectorAll(".latest-link")) a.href = viewUrl({ snapshot: "" });
 }
 
 // The URL fragment of a view: the settings that differ from the defaults.
@@ -1891,6 +1920,7 @@ function enterSolo() {
   const home = el("a", {}, "Atomistic PyPI usage");
   const foot = el("p", { class: "solo-foot" },
     home, `. Data: PyPI download statistics via ClickPy, fetched ${D.fetched}. `, el("a", { href: LICENSE_URL }, LICENSE), ".");
+  if (state.snapshot) foot.append(" Fixed to this refresh; ", el("a", { class: "latest-link" }, "see the latest"), ".");
   document.querySelector("main").append(foot);
   // links leave the embedding page alone
   document.head.append(el("base", { target: "_blank" }));
@@ -1909,8 +1939,20 @@ function fitSolo() {
 }
 
 function openShare(card) {
+  share.card = card;
+  fillShare();
+  document.getElementById("share-dlg").showModal();
+}
+
+// The link, embed and credit of the figure in the share dialog, for the latest data or this refresh.
+function fillShare() {
+  const { card, kind } = share;
+  for (const b of document.querySelectorAll("#share-kind button")) b.setAttribute("aria-pressed", String(b.dataset.v === kind));
+  document.getElementById("share-kind-note").textContent = kind === "fixed"
+    ? `The numbers stay those of the refresh of ${D.fetched}, data to ${D.dates[N - 1]}.`
+    : "The figure follows the monthly refresh.";
   const title = card.querySelector("h2").textContent;
-  const url = viewUrl({ panel: card.dataset.panel });
+  const url = viewUrl({ panel: card.dataset.panel, snapshot: kind === "fixed" ? D.fetched : "" });
   const attr = (v) => v.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
   document.getElementById("share-title").textContent = `Share "${title}"`;
   document.getElementById("share-link").value = url;
@@ -1918,7 +1960,6 @@ function openShare(card) {
     `<iframe src="${attr(url)}" title="${attr(title)}" width="100%" height="${Math.ceil(card.offsetHeight + 28)}" style="border: 0" loading="lazy"></iframe>`;
   document.getElementById("share-credit").value =
     `"${title}", Atomistic PyPI usage, ${url}, ${LICENSE}. Data: PyPI download statistics via ClickPy, fetched ${D.fetched}.`;
-  document.getElementById("share-dlg").showModal();
 }
 
 // Copies a field of the share dialog; where the clipboard is refused, the text stays selected.
