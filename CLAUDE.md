@@ -10,9 +10,10 @@ atomistic-ML packages, published on GitHub Pages. Two pieces, joined only by
 
 - `fetch_stats.py` (stdlib only, no dependencies, no venv) queries the network
   and writes `docs/data.js` as `window.PYPI_DATA = {...};`.
-- `docs/index.html` is a single self-contained page (inline CSS and JS, no
-  build step, no libraries) that loads `data.js` via `<script>` and renders
-  everything as hand-built SVG. It opens straight from disk.
+- `docs/index.html` is the dashboard (inline JS, no build step, no libraries)
+  that loads `data.js` via `<script>` and renders everything as hand-built SVG.
+  `docs/about.html` holds the methods and licence text. Both share
+  `docs/style.css` and open straight from disk.
 
 There are no tests, linters, or build. `.github/workflows/pages.yml` refreshes
 the data on the 2nd of every month, commits it, and deploys `docs/` to Pages.
@@ -67,3 +68,9 @@ Each package: `name`, `category`, `via` (`null` for listed seeds; shown as
 "Found via"), `owner`, `since`, `daily` and `monthly`
 (each `{all, linux, desktop}` aligned with `dates` / `months`), `ci`, `bulk`
 (shares or `null`). Changing a field means editing both files.
+
+Each refresh also writes a frozen copy to `docs/snapshots/<fetched>.js`, which
+`#snapshot=<fetched>` links load instead of `data.js` ("Fixed" share links).
+Snapshots are never rewritten and are deleted after `SNAPSHOT_KEEP_DAYS` (a
+year), so `index.html` must keep reading those up to a year old: add fields as
+optional, and rename or drop one only once no snapshot carries the old form.

@@ -8,334 +8,10 @@
 <meta property="og:title" content="Atomistic PyPI usage">
 <meta property="og:description" content="How much are atomistic-simulation Python packages used? PyPI downloads of about 200 packages, updated monthly.">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://lan496.github.io/pypi-atomistic-usage/og.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
-<style>
-:root {
-  color-scheme: light;
-  --page: #f4f4f1;
-  --surface: #ffffff;
-  --raised: #fafaf8;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --grid: #ebeae4;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.09);
-  --wash: rgba(11, 11, 11, 0.045);
-  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 4px 16px rgba(11, 11, 11, 0.04);
-  --up: #006300;
-  --down: #d03b3b;
-  --c1: #2a78d6;
-  --c2: #eb6834;
-  --c3: #1baf7a;
-  --c4: #eda100;
-  --c5: #e87ba4;
-  --c6: #008300;
-  --c7: #6250d6;
-  --c8: #e34948;
-  --radius: 12px;
-  --brand-ink: #0b3566;
-  --brand-accent: #06a9cf;
-}
-/* figure export adds .export to draw in the light colours whatever the theme */
-@media (prefers-color-scheme: dark) {
-  :root:not(.export) {
-    color-scheme: dark;
-    --page: #0d0d0d;
-    --surface: #171716;
-    --raised: #1d1d1c;
-    --text-primary: #f0efec;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --grid: #262624;
-    --axis: #3a3a37;
-    --border: rgba(255, 255, 255, 0.09);
-    --wash: rgba(255, 255, 255, 0.06);
-    --shadow: none;
-    --up: #0ca30c;
-    --down: #e66767;
-    --c1: #3987e5;
-    --c2: #d95926;
-    --c3: #199e70;
-    --c4: #c98500;
-    --c5: #d55181;
-    --c6: #0ca30c;
-    --c7: #9085e9;
-    --c8: #e66767;
-    --brand-ink: #f0efec;
-    --brand-accent: #2cc3e6;
-  }
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--page);
-  color: var(--text-primary);
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-main { max-width: 1240px; margin: 0 auto; padding: 0 24px 32px; }
-a { color: var(--c1); text-underline-offset: 2px; }
-code { font-size: 12px; background: var(--wash); border-radius: 4px; padding: 1px 4px; }
-
-/* ---- masthead ---- */
-.topbar { display: flex; align-items: center; gap: 16px; padding: 16px 0; }
-.brand {
-  display: flex; align-items: center; gap: 10px; text-decoration: none;
-  font-size: 17px; font-weight: 750; letter-spacing: -0.015em; color: var(--brand-ink);
-}
-.brand img { width: 36px; height: 36px; }
-.brand b { font-weight: inherit; color: var(--brand-accent); }
-.topbar nav { display: flex; gap: 4px; margin-left: auto; }
-.topbar nav a {
-  color: var(--text-secondary); text-decoration: none; border-radius: 8px; padding: 6px 10px;
-  display: inline-flex; align-items: center; gap: 6px;
-}
-.topbar nav a:hover { background: var(--wash); color: var(--text-primary); }
-.topbar nav svg { width: 16px; height: 16px; flex: none; }
-.hero { padding: 24px 0 28px; max-width: 820px; }
-.eyebrow {
-  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px;
-  font-size: 12px; font-weight: 500; color: var(--text-secondary);
-  background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px 3px 8px;
-}
-.eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--up); }
-h1 { font-size: clamp(28px, 4.2vw, 44px); line-height: 1.08; letter-spacing: -0.025em; margin: 0 0 14px; font-weight: 700; }
-h1 span { color: var(--text-muted); }
-.lead { font-size: 16px; color: var(--text-secondary); margin: 0 0 10px; }
-.sub { color: var(--text-muted); margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
-
-/* ---- headline numbers ---- */
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
-.stat {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 2px;
-}
-.stat .label { color: var(--text-secondary); font-size: 12px; font-weight: 500; }
-.stat .value {
-  font-size: 26px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.stat .detail { color: var(--text-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.stat .spark { margin-top: 6px; width: 100%; height: 28px; }
-
-/* ---- toolbar ---- */
-.toolbar {
-  position: sticky; top: 0; z-index: 3; margin: 0 -24px 16px; padding: 10px 24px;
-  background: color-mix(in srgb, var(--page) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
-  border-bottom: 1px solid transparent;
-}
-.toolbar.stuck { border-bottom-color: var(--border); }
-.controls { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
-.ctl { display: flex; gap: 8px; align-items: center; color: var(--text-muted); font-size: 12px; font-weight: 500; }
-.seg {
-  display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px;
-  background: var(--wash); border: 1px solid var(--border);
-}
-.seg button {
-  font: inherit; font-size: 13px; font-weight: 500; color: var(--text-secondary); background: transparent;
-  border: 0; border-radius: 7px; padding: 3px 10px; cursor: pointer;
-}
-.seg button:hover { color: var(--text-primary); }
-.seg button[aria-pressed="true"] { color: var(--text-primary); background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
-.search { margin-left: auto; position: relative; }
-.search svg { position: absolute; left: 9px; top: 50%; width: 14px; height: 14px; transform: translateY(-50%); color: var(--text-muted); }
-input[type="search"] {
-  font: inherit; font-size: 13px; color: var(--text-primary); background: var(--surface);
-  border: 1px solid var(--border); border-radius: 9px; padding: 5px 10px 5px 28px; width: 200px;
-}
-input[type="search"]:focus { outline: 2px solid color-mix(in srgb, var(--c1) 40%, transparent); outline-offset: 1px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.chip {
-  font: inherit; font-size: 12px; color: var(--text-secondary); cursor: pointer;
-  display: inline-flex; align-items: center; gap: 6px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px 3px 8px;
-}
-.chip:hover { color: var(--text-primary); border-color: var(--axis); }
-.chip[aria-pressed="true"] { color: var(--text-primary); border-color: currentColor; font-weight: 600; }
-.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.chip b { font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-
-/* ---- cards ---- */
-.card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 18px 20px; margin-bottom: 16px; min-width: 0;
-}
-.card-head { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: flex-start; margin-bottom: 12px; }
-.card-head > div:first-child { flex: 1 1 280px; }
-h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; margin: 0; }
-h3 { font-size: 13px; font-weight: 650; margin: 0 0 6px; color: var(--text-primary); }
-.note { color: var(--text-muted); font-size: 12px; margin: 2px 0 0; }
-.split { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 16px; }
-.split > .card { margin-bottom: 16px; }
-
-/* ---- line chart ---- */
-.chart-wrap { position: relative; }
-#chart { display: block; width: 100%; outline-offset: 4px; border-radius: 4px; }
-#chart text { font-size: 11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
-#chart text.end-label { fill: var(--text-secondary); font-size: 11.5px; }
-#chart text.end-label.hl { fill: var(--text-primary); font-weight: 600; }
-#tooltip {
-  position: absolute; top: 8px; pointer-events: none; display: none; z-index: 2;
-  background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
-  padding: 10px 12px; font-size: 12px; line-height: 1.45;
-}
-#tooltip .date { color: var(--text-secondary); font-weight: 600; margin-bottom: 6px; }
-#tooltip .rows { display: grid; grid-template-rows: repeat(var(--rows), auto); grid-auto-flow: column; column-gap: 16px; }
-#tooltip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); padding: 0 4px; border-radius: 4px; }
-#tooltip .row b { color: var(--text-primary); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
-#tooltip .row.hl { color: var(--text-primary); font-weight: 600; background: var(--wash); }
-#tooltip .rank { color: var(--text-muted); min-width: 16px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 400; }
-.key { display: inline-block; width: 10px; height: 3px; border-radius: 2px; flex: none; }
-
-/* ---- bar chart race ---- */
-.race-ctl { display: flex; align-items: center; gap: 10px; }
-.play {
-  font: inherit; font-size: 13px; font-weight: 600; color: var(--surface); background: var(--text-primary); cursor: pointer;
-  border: 0; border-radius: 999px; padding: 5px 14px 5px 10px; display: inline-flex; align-items: center; gap: 6px;
-}
-.play svg { width: 12px; height: 12px; }
-.race-ctl input { width: 160px; accent-color: var(--c1); }
-#race-date { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; min-width: 92px; text-align: right; }
-#race { position: relative; overflow: hidden; }
-.race-row {
-  position: absolute; left: 0; right: 0; top: 0; height: 24px;
-  display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 10px; align-items: center;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-.race-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
-.race-track { display: flex; align-items: center; gap: 8px; }
-.race-fill { height: 16px; min-width: 2px; border-radius: 3px 5px 5px 3px; transition: width 0.15s linear; }
-.race-value { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
-@media (prefers-reduced-motion: reduce) { .race-row, .race-fill { transition: none; } }
-
-/* ---- category share ---- */
-.share-bar { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; margin: 4px 0 14px; }
-.share-bar div { min-width: 2px; }
-.cat-list { list-style: none; margin: 0; padding: 0; }
-.cat-list li { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: center; padding: 6px 8px; margin: 0 -8px; border-radius: 8px; cursor: pointer; }
-.cat-list li:hover { background: var(--wash); }
-.cat-list li[aria-current="true"] { background: var(--wash); font-weight: 600; }
-.cat-list .name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; }
-.cat-list .name span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cat-list .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.cat-list .n { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.cat-list .v { font-size: 13px; font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
-
-/* ---- table ---- */
-.table-wrap { overflow-x: auto; margin: 0 -20px -18px; }
-table { border-collapse: collapse; width: 100%; }
-th, td { padding: 7px 10px; text-align: left; white-space: nowrap; }
-th:first-child, td:first-child { padding-left: 20px; }
-th:last-child, td:last-child { padding-right: 20px; }
-th {
-  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);
-  background: var(--raised); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-}
-th[data-sort] { cursor: pointer; user-select: none; }
-th[data-sort]:hover { color: var(--text-primary); }
-th[aria-sort="descending"], th[aria-sort="ascending"] { color: var(--text-primary); }
-th[aria-sort="descending"]::after { content: " \2193"; }
-th[aria-sort="ascending"]::after { content: " \2191"; }
-td { border-bottom: 1px solid var(--grid); }
-tbody tr:last-child td { border-bottom: 0; }
-tbody tr:hover { background: var(--wash); }
-td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-td.rank { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; width: 1%; }
-td.pkg { font-weight: 550; }
-td.cat { color: var(--text-secondary); font-size: 12px; }
-.ranking th { white-space: normal; }
-td.wrap { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
-td.wrap .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
-td.muted { color: var(--text-muted); }
-td.bar { width: 10%; min-width: 72px; padding-left: 0; }
-.bar-fill { height: 8px; min-width: 2px; border-radius: 4px; opacity: 0.85; }
-.icon { display: inline-block; width: 20px; height: 20px; border-radius: 5px; margin-right: 8px; vertical-align: middle; }
-span.icon { background: var(--wash); color: var(--text-muted); font-size: 11px; font-weight: 600; line-height: 20px; text-align: center; }
-#tooltip .icon, .race-name .icon { width: 14px; height: 14px; margin-right: 0; vertical-align: -2px; border-radius: 3px; font-size: 9px; line-height: 14px; flex: none; }
-.race-name .icon { margin-right: 6px; width: 16px; height: 16px; line-height: 16px; }
-td a, a.pkg-link { color: inherit; text-decoration: none; }
-td a:hover, a.pkg-link:hover { text-decoration: underline; }
-a.pkg-link:hover text { fill: var(--text-primary); text-decoration: underline; }
-.up { color: var(--up); }
-.down { color: var(--down); }
-.spark { display: block; }
-.empty { color: var(--text-muted); text-align: center; padding: 24px; }
-
-/* ---- analysis plots ---- */
-.plot { display: block; width: 100%; }
-.plot text { font-size: 11px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
-.plot text.lbl { fill: var(--text-secondary); font-size: 11.5px; }
-.plot text.axis-title { fill: var(--text-secondary); font-weight: 600; }
-.headline { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin: 6px 0 2px; }
-.headline small { font-size: 13px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
-.growth { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; }
-.mini-list { list-style: none; margin: 8px 0 0; padding: 0; }
-.mini-list li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--grid); font-size: 13px; min-width: 0; }
-.mini-list li span.name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mini-list .icon { margin-right: 0; width: 16px; height: 16px; line-height: 16px; font-size: 9px; flex: none; }
-.mini-list .v { margin-left: auto; color: var(--text-secondary); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.mini-list .y { color: var(--text-muted); font-size: 11px; }
-.split.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.deps th { white-space: normal; }
-.deps td.kids { white-space: normal; min-width: 160px; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
-.deps td.kids span { color: var(--text-muted); }
-.tip {
-  position: fixed; z-index: 10; pointer-events: none; display: none; max-width: 320px;
-  background: var(--raised); border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14); padding: 8px 10px; font-size: 12px; line-height: 1.45;
-}
-.tip .t { font-weight: 600; margin-bottom: 2px; }
-.tip .m { color: var(--text-muted); }
-.tip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); }
-.tip .row b { margin-left: auto; padding-left: 12px; color: var(--text-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
-.tip .row.hl { color: var(--text-primary); font-weight: 600; }
-.tools { display: flex; gap: 4px; align-items: center; }
-.tools button {
-  font: inherit; font-size: 12px; color: var(--text-secondary); background: var(--surface); cursor: pointer;
-  border: 1px solid var(--border); border-radius: 7px; padding: 3px 8px; display: inline-flex; align-items: center; gap: 4px;
-}
-.tools button:hover { color: var(--text-primary); background: var(--wash); }
-.tools svg { width: 12px; height: 12px; }
-.more-row { display: flex; justify-content: center; padding: 14px 0 0; }
-.more-btn {
-  font: inherit; font-size: 13px; font-weight: 500; color: var(--text-primary); background: var(--surface); cursor: pointer;
-  border: 1px solid var(--border); border-radius: 999px; padding: 5px 16px;
-}
-.more-btn:hover { background: var(--wash); }
-.more-row[hidden] { display: none; }
-
-/* ---- about ---- */
-.about { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 32px; color: var(--text-secondary); }
-.about p { margin: 0 0 10px; }
-footer { color: var(--text-muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; padding: 8px 0 0; }
-footer a { color: inherit; }
-
-@media (max-width: 960px) {
-  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .split, .split.even, .about, .growth { grid-template-columns: minmax(0, 1fr); }
-}
-/* Ranking: drop secondary columns as the page narrows so the table fits without scrolling */
-@media (max-width: 1180px) {
-  .ranking :is(th, td):is(:nth-child(4), :nth-child(5), :nth-child(7)) { display: none; }
-}
-@media (max-width: 860px) {
-  .ranking :is(th, td):is(:nth-child(10), :nth-child(11), :nth-child(12)) { display: none; }
-}
-@media (max-width: 640px) {
-  main { padding: 0 14px 24px; }
-  /* too tall to keep on screen at this width */
-  .toolbar { position: static; margin: 0 -14px 12px; padding: 8px 14px; }
-  .topbar nav a span { display: none; }
-  .search { margin-left: 0; width: 100%; }
-  input[type="search"] { width: 100%; }
-  .card { padding: 14px; }
-  .table-wrap { margin: 0 -14px -14px; }
-  .stat .value { font-size: 20px; }
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
@@ -345,7 +21,7 @@ footer a { color: inherit; }
       <span>Atomistic <b>PyPI</b> usage</span>
     </a>
     <nav>
-      <a href="#about"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/></svg><span>About</span></a>
+      <a href="about.html"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/></svg><span>About</span></a>
       <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 5v6M5 8h6"/></svg><span>Add a package</span></a>
       <a href="https://github.com/lan496/pypi-atomistic-usage"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
     </nav>
@@ -365,6 +41,8 @@ footer a { color: inherit; }
 
   <div class="toolbar" id="toolbar">
     <div class="controls">
+      <span class="scope">For every figure below</span>
+      <button type="button" class="reset" id="reset" hidden>Reset</button>
       <div class="ctl">Period
         <div class="seg" id="days">
           <button type="button" data-v="30">30d</button>
@@ -393,15 +71,17 @@ footer a { color: inherit; }
           <button type="button" data-v="linear">Linear</button>
         </div>
       </div>
+    </div>
+    <div class="filter-row">
+      <div class="chips" id="cats" role="group" aria-label="Category"></div>
       <label class="search">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.75"/><path d="M10.5 10.5 14 14"/></svg>
         <input type="search" id="q" placeholder="Find a package" aria-label="Find a package">
       </label>
     </div>
-    <div class="chips" id="cats" role="group" aria-label="Category"></div>
   </div>
 
-  <section class="card">
+  <section class="card" data-panel="era">
     <div class="card-head">
       <div>
         <h2>The field over time</h2>
@@ -420,7 +100,7 @@ footer a { color: inherit; }
          aria-label="Stacked area chart of downloads per day of each category per month since 2016."></svg>
   </section>
 
-  <section class="card">
+  <section class="card" data-panel="growth">
     <div class="card-head">
       <div>
         <h2>Rising and fading</h2>
@@ -440,7 +120,7 @@ footer a { color: inherit; }
   </section>
 
   <div class="split even">
-    <section class="card">
+    <section class="card" data-panel="adopt">
       <div class="card-head">
         <div>
           <h2>How fast packages took off</h2>
@@ -451,7 +131,7 @@ footer a { color: inherit; }
       <svg id="adopt" class="plot" height="336" role="img"
            aria-label="Downloads per day of the top packages against months since their first release."></svg>
     </section>
-    <section class="card">
+    <section class="card" data-panel="race">
       <div class="card-head">
         <div>
           <h2>Bar chart race</h2>
@@ -472,7 +152,7 @@ footer a { color: inherit; }
   </div>
 
   <div class="split">
-    <section class="card">
+    <section class="card" data-panel="deps">
       <div class="card-head">
         <div>
           <h2>Built on top</h2>
@@ -495,18 +175,19 @@ footer a { color: inherit; }
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" data-panel="share">
       <div class="card-head">
         <div>
           <h2>Downloads by category</h2>
           <p class="note" id="share-note"></p>
         </div>
+        <div class="tools"></div>
       </div>
       <div id="share"></div>
     </section>
   </div>
 
-  <section class="card">
+  <section class="card" data-panel="chart">
     <div class="card-head">
       <div>
         <h2 id="chart-title"></h2>
@@ -522,7 +203,7 @@ footer a { color: inherit; }
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" data-panel="table">
     <div class="card-head">
       <div>
         <h2>Ranking</h2>
@@ -554,60 +235,45 @@ footer a { color: inherit; }
     <div class="more-row"><button type="button" class="more-btn" id="more"></button></div>
   </section>
 
-  <section class="card" id="about">
-    <div class="card-head"><div><h2>About</h2></div></div>
-    <div class="about">
-      <div>
-        <h3>Data</h3>
-        <p>Download counts come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, ClickHouse's public copy of the PyPI download logs, which goes back to 2016.
-          "All" leaves out installers that mirror PyPI wholesale (bandersnatch, devpi, Nexus, Artifactory, z3c.pypimirror).
-          The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
-          The data are refreshed monthly.</p>
-      </div>
-      <div>
-        <h3>Packages</h3>
-        <p>Listed packages are a hand-picked list, every PyPI package of
-          <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>,
-          and the simulation engines of <a href="https://atomistic.software">atomistic.software</a> that install from PyPI.
-          The page also shows the most-downloaded dependents: packages whose latest release requires a listed package, directly or through other dependents, named in the "Found via" column; a dependency declared only in an optional extra does not count, and general-purpose libraries such as RDKit and DGL are not followed.
-          Each dependent is put by hand in the category of what it does; one not yet reviewed takes the category of the package it was found through.
-          <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md">Suggest a package.</a></p>
-      </div>
-      <div>
-        <h3>Downloads are not users</h3>
-        <p>CI services, container builds and cluster jobs install packages over and over, so download counts measure installs, not people.
-          Two columns of the table estimate this over the last <span class="auto-days"></span> days.
-          <b>CI</b> is the share whose installer reported a CI run; pip and uv report one when a variable such as <code>CI</code> is set, as on GitHub Actions and GitLab CI.
-          <b>Bulk rebuilds</b> is the share that came, without a CI flag, from one pinned environment downloading the same version at least <span id="bulk-min"></span> times on one day (same installer, Python, OS, glibc and country): a Docker image or batch job rebuilt many times rather than many users.</p>
-        <p>Automated installs run almost entirely on Linux, so "macOS + Windows" leaves them out; it also leaves out real use on Linux workstations and clusters, and is therefore a floor on interactive use, not an estimate of it.
-          Installs from outside PyPI, such as conda-forge, are not counted.</p>
-      </div>
-      <div>
-        <h3>Using the figures</h3>
-        <p>Each chart downloads as PNG or SVG, drawn in light colours with its title, the filters in use and the data source, ready for a slide; CSV gives the numbers behind it.
-          The bar chart race records as a 1280x720 video (MP4 or WebM, depending on the browser) in real time; keep the tab in view while it records.
-          The address bar keeps the current view, so a link reproduces it.</p>
-        <p>PyPI as a whole has grown too, and much of that growth is automated installs.
-          The baseline of all of PyPI (ClickPy's monthly totals over every project, all platforms, mirrors included) shows whether the field grew faster than that:
-          see "Per million PyPI downloads" in The field over time and the dashed line in Rising and fading.
-          The package list is today's, so packages that were popular once and are no longer listed are missing from the early years.</p>
-      </div>
-      <div>
-        <h3>How to cite</h3>
-        <p id="cite"></p>
-      </div>
-    </div>
-  </section>
   <footer>
     <span id="footer"></span>
     <span>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
       Data from <a href="https://clickpy.clickhouse.com">ClickPy</a> by ClickHouse, Inc., queried as in the <a href="https://github.com/ClickHouse/clickpy">ClickPy source</a> (Apache-2.0); not affiliated with ClickHouse or ClickPy.
-      Icons are the GitHub owner of each repository.</span>
+      Icons are the GitHub owner of each repository.
+      Figures and data <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, code MIT.</span>
   </footer>
 </main>
 
 <div class="tip" id="tip"></div>
-<script src="data.js"></script>
+<dialog class="share-dlg" id="share-dlg">
+  <form method="dialog">
+    <h2 id="share-title"></h2>
+    <p class="note">Free to reuse, also commercially, with the credit below (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>).
+      Both keep the filters in use; add <code>&amp;theme=light</code> to the link for light colours.</p>
+    <label>Data</label>
+    <div class="seg" id="share-kind">
+      <button type="button" data-v="latest" title="Follows the monthly refresh">Latest</button>
+      <button type="button" data-v="fixed" id="share-fixed" title="Keeps the numbers of this refresh for a year"></button>
+    </div>
+    <p class="note" id="share-kind-note"></p>
+    <label for="share-link">Link to this figure alone</label>
+    <div class="field"><input id="share-link" readonly><button type="button" class="more-btn" data-copy="share-link">Copy</button></div>
+    <label for="share-embed">Embed in a web page</label>
+    <div class="field"><textarea id="share-embed" rows="3" readonly></textarea><button type="button" class="more-btn" data-copy="share-embed">Copy</button></div>
+    <label for="share-credit">Credit</label>
+    <div class="field"><textarea id="share-credit" rows="2" readonly></textarea><button type="button" class="more-btn" data-copy="share-credit">Copy</button></div>
+    <div class="dlg-foot"><button class="more-btn">Close</button></div>
+  </form>
+</dialog>
+<script>
+// #snapshot=YYYY-MM-DD loads the frozen data of that refresh instead of the latest
+const SNAPSHOT = (location.hash.match(/[#&]snapshot=(\d{4}-\d{2}-\d{2})(?=&|$)/) || [])[1] || "";
+document.write(`<script src="${SNAPSHOT ? `snapshots/${SNAPSHOT}.js` : "data.js"}"><\/script>`);
+</script>
+<script>
+// a snapshot that does not exist falls back to the latest data
+if (!window.PYPI_DATA) document.write('<script src="data.js"><\/script>');
+</script>
 <script>
 const D = window.PYPI_DATA;
 const N = D.dates.length;
@@ -631,6 +297,11 @@ const VIDEO_W = 1280;
 const VIDEO_H = 720;
 const VIDEO_FPS = 30;
 const SITE = "lan496.github.io/pypi-atomistic-usage";
+const LICENSE = "CC BY 4.0";
+const LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/";
+const SHARE_ICON = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7 7 5M4.2 5.6 3 6.8a1.9 1.9 0 0 0 2.7 2.7l1.2-1.2M7.8 6.4 9 5.2a1.9 1.9 0 0 0-2.7-2.7L5.1 3.7"/></svg>';
+// the figures that a link can show alone, by their data-panel name
+const PANELS = [...document.querySelectorAll("[data-panel]")].map((n) => n.dataset.panel);
 const PAUSE_ICON ='<svg viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/></svg>';
 
 // days of each month covered by the data; the last month may be partial
@@ -655,7 +326,20 @@ const PK = D.packages.map((p) => ({
 // the first month with any download, where "All years" starts
 const FIRST_MONTH = Math.max(0, D.months.findIndex((_, i) => PK.some((p) => p.monthly.all[i] > 0)));
 
-const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "" };
+// the toolbar settings, which every figure follows in part
+const PAGE_SETTINGS = ["days", "os", "cat", "lines", "scale", "q"];
+// which of them each figure follows; the field over time and rising and fading span whole years
+const PANEL_USES = {
+  era: ["os", "cat", "q"],
+  growth: ["os", "cat", "q"],
+  adopt: ["days", "os", "cat", "q"],
+  race: ["days", "os", "cat", "q"],
+  deps: ["days", "os", "cat", "q"],
+  share: ["days", "os", "q"],
+  chart: ["days", "os", "cat", "q", "lines", "scale"],
+  table: ["days", "os", "cat", "q"],
+};
+const DEFAULTS = { days: 90, os: "all", cat: "", lines: 25, scale: "log", mode: "abs", q: "", panel: "", theme: "", snapshot: "" };
 const state = { ...DEFAULTS, sort: "total", desc: true, all: false, hl: null, cursor: null };
 // colour of each package in the current view; see assignColors()
 let colors = new Map();
@@ -666,6 +350,12 @@ const chart = document.getElementById("chart");
 const tooltip = document.getElementById("tooltip");
 // what the current chart shows: packages, their paths, and the scales
 let view = null;
+// the figure shown alone (#panel=...) and the credit line under it; null on the full page
+let solo = null;
+// keep the toolbar's buttons in step with the state; see bindSeg()
+const segSyncs = [];
+// the figure in the share dialog and which data its link keeps
+const share = { card: null, kind: "latest" };
 // bar chart race: the point shown, the playback timer, and each package's row
 const race = { i: null, timer: null, rows: new Map() };
 
@@ -674,25 +364,35 @@ init();
 function init() {
   const listed = PK.filter((p) => p.via === null).length;
   document.getElementById("n-pk").textContent = PK.length;
-  document.getElementById("fresh").textContent = `Updated monthly · data to ${D.dates[N - 1]}`;
   document.getElementById("sub").textContent =
     `${listed} listed packages and ${PK.length - listed} dependents. Daily data ${D.dates[0]} to ${D.dates[N - 1]}, monthly from ${D.months[FIRST_MONTH]}.`;
   document.getElementById("footer").textContent = `Data fetched ${D.fetched} from ClickPy and PyPI.`;
-  document.getElementById("bulk-min").textContent = full(D.bulk_min);
-  for (const node of document.querySelectorAll(".auto-days")) node.textContent = D.automation_days;
   document.getElementById("ci-head").textContent = `CI ${D.automation_days}d`;
   document.getElementById("bulk-head").textContent = `Bulk ${D.automation_days}d`;
   document.getElementById("bulk-head").title =
     `Share of downloads of the last ${D.automation_days} days from one environment downloading one version at least ${full(D.bulk_min)} times a day`;
 
-  document.getElementById("cite").textContent =
-    `Atomistic PyPI usage, ${location.origin}${location.pathname} (data fetched ${D.fetched} from ClickPy). Source code: https://github.com/lan496/pypi-atomistic-usage.`;
-
   readHash();
+  const fresh = document.getElementById("fresh");
+  if (state.snapshot) {
+    fresh.append(`Fixed to the refresh of ${D.fetched}, data to ${D.dates[N - 1]}. `, el("a", { class: "latest-link" }, "See the latest"));
+  } else {
+    fresh.textContent = `${SNAPSHOT ? `No snapshot of ${SNAPSHOT} (they are kept for a year); showing the latest. ` : ""}Updated monthly · data to ${D.dates[N - 1]}`;
+  }
+  document.documentElement.classList.toggle("light", state.theme === "light");
+  if (state.panel) enterSolo();
   const q = document.getElementById("q");
   q.value = state.q;
   q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); renderAll(); });
 
+  for (const card of document.querySelectorAll("[data-panel]")) {
+    card.querySelector("h2").after(el("p", { class: "uses", "aria-label": "Settings this figure follows" }));
+  }
+  document.getElementById("reset").addEventListener("click", () => {
+    for (const key of PAGE_SETTINGS) state[key] = DEFAULTS[key];
+    q.value = "";
+    renderAll();
+  });
   bindSeg("days", Number);
   bindSeg("os", String);
   bindSeg("lines", Number);
@@ -712,6 +412,20 @@ function init() {
       b.addEventListener("click", () => exportFig(box.dataset.fig, kind));
       box.append(b);
     }
+  }
+
+  for (const card of document.querySelectorAll("[data-panel]")) {
+    const b = el("button", { type: "button", title: "Link to this figure alone, or embed it in another page" });
+    b.innerHTML = `${SHARE_ICON}Share`;
+    b.addEventListener("click", () => openShare(card));
+    card.querySelector(".card-head .tools").append(b);
+  }
+  document.getElementById("share-fixed").textContent = `Fixed to ${D.fetched}`;
+  for (const b of document.querySelectorAll("#share-kind button")) {
+    b.addEventListener("click", () => { share.kind = b.dataset.v; fillShare(); });
+  }
+  for (const b of document.querySelectorAll("#share-dlg [data-copy]")) {
+    b.addEventListener("click", () => copyField(b));
   }
 
   for (const th of document.querySelectorAll("th[data-sort]")) {
@@ -750,7 +464,9 @@ function renderAll() {
   state.cursor = null;
   assignColors();
   writeHash();
+  for (const sync of segSyncs) sync();
   syncChips();
+  renderUses();
   renderStats();
   renderPlots();
   renderRace();
@@ -761,6 +477,12 @@ function renderAll() {
 
 // the SVG charts, which are redrawn on resize
 function renderPlots() {
+  drawPlots();
+  // shown alone, the plot is drawn again at the height its heading and credit leave free
+  if (solo && fitSolo()) drawPlots();
+}
+
+function drawPlots() {
   renderChart();
   renderEra();
   renderGrowth();
@@ -790,16 +512,33 @@ function readHash() {
   pick("scale", ["log", "linear"]);
   pick("mode", ["abs", "pypi", "share"]);
   pick("cat", D.categories);
+  pick("panel", PANELS);
+  pick("theme", ["light"]);
+  // the snapshot loaded, if it was found
+  if (SNAPSHOT === D.fetched) state.snapshot = SNAPSHOT;
   if (h.has("q")) state.q = h.get("q").toLowerCase();
 }
 
 function writeHash() {
+  const hash = hashOf(state);
+  history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
+  if (solo) solo.home.href = viewUrl({ panel: "", theme: "" });
+  for (const a of document.querySelectorAll(".latest-link")) a.href = viewUrl({ snapshot: "" });
+}
+
+// The URL fragment of a view: the settings that differ from the defaults.
+function hashOf(s) {
   const h = new URLSearchParams();
   for (const [key, value] of Object.entries(DEFAULTS)) {
-    if (state[key] !== value) h.set(key, state[key]);
+    if (s[key] !== value) h.set(key, s[key]);
   }
-  const hash = h.toString();
-  history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
+  return h.toString();
+}
+
+// The address of the current view with some settings replaced.
+function viewUrl(changes) {
+  const hash = hashOf({ ...state, ...changes });
+  return `${location.href.split("#")[0]}${hash ? `#${hash}` : ""}`;
 }
 
 function setCat(c) {
@@ -1315,7 +1054,7 @@ function drawRaceFrame(ctx, f, t) {
   ctx.fillText(f.ax.labels[Math.round(t)], W - pad, H - 64);
   ctx.font = `14px ${f.font}`;
   ctx.textAlign = "left";
-  ctx.fillText(`Data: PyPI downloads via ClickPy, fetched ${D.fetched}. ${SITE}`, pad, H - 24);
+  ctx.fillText(creditLine(), pad, H - 24);
 }
 
 function setPlay(playing) {
@@ -1774,8 +1513,7 @@ function figureSvg(src, title, notes, legend) {
   plot.removeAttribute("tabindex");
   for (const [k, v] of Object.entries({ x: pad, y, width: W, height: H })) plot.setAttribute(k, v);
   const footY = y + H + 22;
-  parts.push(plot, svg("text", { x: pad, y: footY, "font-size": 11, fill: ink.muted },
-    `Data: PyPI downloads via ClickPy, fetched ${D.fetched}. ${SITE}`));
+  parts.push(plot, svg("text", { x: pad, y: footY, "font-size": 11, fill: ink.muted }, creditLine()));
   const w = W + 2 * pad;
   const h = footY + pad - 8;
   for (const [k, v] of Object.entries({ width: w, height: h, viewBox: `0 0 ${w} ${h}` })) node.setAttribute(k, v);
@@ -1790,6 +1528,73 @@ function inlineStyles(src, dst) {
     dst.style.setProperty(prop, cs.getPropertyValue(prop));
   }
   [...src.children].forEach((child, k) => inlineStyles(child, dst.children[k]));
+}
+
+// The source and licence line at the foot of an exported figure.
+function creditLine() {
+  return `Data: PyPI download statistics (CC BY 4.0) via ClickPy, fetched ${D.fetched}. ${SITE}, ${LICENSE}`;
+}
+
+// ---- sharing one figure ----
+
+// Hides everything but the figure named in #panel=..., with a credit line under it, for an iframe.
+function enterSolo() {
+  const panel = document.querySelector(`[data-panel="${state.panel}"]`);
+  document.documentElement.classList.add("solo");
+  for (const node of document.querySelectorAll("main > *, .split > *")) node.classList.toggle("off", !node.contains(panel));
+  const home = el("a", {}, "Atomistic PyPI usage");
+  const foot = el("p", { class: "solo-foot" },
+    home, `. Data: PyPI download statistics via ClickPy, fetched ${D.fetched}. `, el("a", { href: LICENSE_URL }, LICENSE), ".");
+  if (state.snapshot) foot.append(" Fixed to this refresh; ", el("a", { class: "latest-link" }, "see the latest"), ".");
+  document.querySelector("main").append(foot);
+  // links leave the embedding page alone
+  document.head.append(el("base", { target: "_blank" }));
+  solo = { panel, foot, home };
+}
+
+// Gives the plot of the figure shown alone the height left in the window; true if it changed.
+function fitSolo() {
+  const plot = solo.panel.querySelector("svg.plot, svg#chart");
+  if (!plot) return false;
+  const rest = solo.panel.offsetHeight - plot.getBoundingClientRect().height + solo.foot.offsetHeight;
+  const h = Math.max(240, Math.floor(innerHeight - rest));
+  if (h === Number(plot.getAttribute("height"))) return false;
+  plot.setAttribute("height", h);
+  return true;
+}
+
+function openShare(card) {
+  share.card = card;
+  fillShare();
+  document.getElementById("share-dlg").showModal();
+}
+
+// The link, embed and credit of the figure in the share dialog, for the latest data or this refresh.
+function fillShare() {
+  const { card, kind } = share;
+  for (const b of document.querySelectorAll("#share-kind button")) b.setAttribute("aria-pressed", String(b.dataset.v === kind));
+  document.getElementById("share-kind-note").textContent = kind === "fixed"
+    ? `The numbers stay those of the refresh of ${D.fetched}, data to ${D.dates[N - 1]}, for a year; after that the link shows the latest data.`
+    : "The figure follows the monthly refresh.";
+  const title = card.querySelector("h2").textContent;
+  const url = viewUrl({ panel: card.dataset.panel, snapshot: kind === "fixed" ? D.fetched : "" });
+  const attr = (v) => v.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
+  document.getElementById("share-title").textContent = `Share "${title}"`;
+  document.getElementById("share-link").value = url;
+  document.getElementById("share-embed").value =
+    `<iframe src="${attr(url)}" title="${attr(title)}" width="100%" height="${Math.ceil(card.offsetHeight + 28)}" style="border: 0" loading="lazy"></iframe>`;
+  document.getElementById("share-credit").value =
+    `"${title}", Atomistic PyPI usage, ${url}, ${LICENSE}. Data: PyPI download statistics via ClickPy, fetched ${D.fetched}.`;
+}
+
+// Copies a field of the share dialog; where the clipboard is refused, the text stays selected.
+function copyField(button) {
+  const field = document.getElementById(button.dataset.copy);
+  field.select();
+  Promise.resolve()
+    .then(() => navigator.clipboard.writeText(field.value))
+    .then(() => { button.textContent = "Copied"; }, () => { button.textContent = "Selected"; });
+  setTimeout(() => { button.textContent = "Copy"; }, 1500);
 }
 
 function download(blob, name) {
@@ -2104,11 +1909,39 @@ function pct(x, signed = false) {
   return `${sign}${Math.abs(x * 100).toFixed(signed ? 1 : 0)}%`;
 }
 
+// Shows on each figure the toolbar settings it follows, marking those changed from the defaults.
+function renderUses() {
+  document.getElementById("reset").hidden = PAGE_SETTINGS.every((key) => state[key] === DEFAULTS[key]);
+  for (const card of document.querySelectorAll("[data-panel]")) {
+    const box = card.querySelector(".uses");
+    const before = new Map([...box.children].map((n) => [n.dataset.key, n.textContent]));
+    box.replaceChildren(...PANEL_USES[card.dataset.panel]
+      .filter((key) => key !== "q" || state.q)
+      .map((key) => {
+        const label = settingLabel(key);
+        const changed = before.has(key) && before.get(key) !== label;
+        return el("span", {
+          "data-key": key,
+          class: `${state[key] !== DEFAULTS[key] ? "set" : ""}${changed ? " flash" : ""}`.trim(),
+        }, label);
+      }));
+  }
+}
+
+function settingLabel(key) {
+  if (key === "days") return state.days ? `Last ${state.days} days` : "All years";
+  if (key === "os") return { all: "All platforms", linux: "Linux", desktop: "macOS + Windows" }[state.os];
+  if (key === "cat") return state.cat || "All categories";
+  if (key === "q") return `Matching "${state.q}"`;
+  if (key === "lines") return state.lines ? `Top ${state.lines}` : "All packages";
+  return state.scale === "log" ? "Log scale" : "Linear scale";
+}
+
 function bindSeg(id, parse) {
   const buttons = [...document.getElementById(id).querySelectorAll("button")];
   const sync = () => buttons.forEach((b) => b.setAttribute("aria-pressed", String(parse(b.dataset.v) === state[id])));
-  buttons.forEach((b) => b.addEventListener("click", () => { state[id] = parse(b.dataset.v); sync(); renderAll(); }));
-  sync();
+  buttons.forEach((b) => b.addEventListener("click", () => { state[id] = parse(b.dataset.v); renderAll(); }));
+  segSyncs.push(sync);
 }
 
 function el(tag, attrs = {}, ...children) {

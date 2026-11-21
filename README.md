@@ -39,6 +39,24 @@ which tracks the citations of atomistic simulation engines. The queries follow
 the materialized views of [ClickPy](https://github.com/ClickHouse/clickpy)
 (Apache-2.0).
 
+## Using the figures
+
+Every figure has a Share button that gives a link to that figure alone
+(`#panel=<name>`, keeping the filters in use; add `&theme=light` for light
+colours) and an `<iframe>` code to embed it in another web page. A "Latest"
+link follows the monthly refresh; a "Fixed" link (`#snapshot=<date>`) keeps the
+data of one refresh for a year, from the copies in `docs/snapshots/`; older
+copies are deleted at each refresh and their links show the latest data. Figures
+also download as PNG, SVG and CSV.
+
 ## License
 
-MIT; see [LICENSE](LICENSE).
+The figures and the compiled data (`docs/data.js` and what the dashboard
+draws from it) are licensed under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): reuse them freely,
+also commercially, with credit to "Atomistic PyPI usage" and a link to the
+dashboard. They aggregate
+[PyPI's download statistics](https://docs.pypi.org/api/bigquery/), themselves
+CC BY 4.0.
+
+The code is MIT; see [LICENSE](LICENSE).
