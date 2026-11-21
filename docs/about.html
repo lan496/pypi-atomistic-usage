@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About: Atomistic PyPI usage</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <a class="brand" href="./">
+      <img src="logo.svg" alt="">
+      <span>Atomistic <b>PyPI</b> usage</span>
+    </a>
+    <nav>
+      <a href="about.html" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.6" fill="currentColor" stroke="none"/></svg><span>About</span></a>
+      <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 5v6M5 8h6"/></svg><span>Add a package</span></a>
+      <a href="https://github.com/lan496/pypi-atomistic-usage"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+    </nav>
+  </div>
+
+  <article class="card doc">
+    <h1>About</h1>
+    <h2 id="data">Data</h2>
+    <p>Download counts come from <a href="https://clickpy.clickhouse.com">ClickPy</a>, ClickHouse's public copy of the PyPI download logs, which goes back to 2016;
+      the logs are <a href="https://docs.pypi.org/api/bigquery/">PyPI's download statistics</a>, licensed CC BY 4.0, and are shown here aggregated.
+      "All" leaves out installers that mirror PyPI wholesale (bandersnatch, devpi, Nexus, Artifactory, z3c.pypimirror).
+      The period of 30 to 180 days shows the 7-day rolling mean of daily downloads; "All years" shows the mean per day of each month.
+      The data are refreshed monthly.</p>
+    <h2 id="packages">Packages</h2>
+    <p>Listed packages are a hand-picked list, every PyPI package of
+      <a href="https://github.com/JuDFTteam/best-of-atomistic-machine-learning">best-of-atomistic-machine-learning</a>,
+      and the simulation engines of <a href="https://atomistic.software">atomistic.software</a> that install from PyPI.
+      The dashboard also shows the most-downloaded dependents: packages whose latest release requires a listed package, directly or through other dependents, named in the "Found via" column; a dependency declared only in an optional extra does not count, and general-purpose libraries such as RDKit and DGL are not followed.
+      Each dependent is put by hand in the category of what it does; one not yet reviewed takes the category of the package it was found through.
+      <a href="https://github.com/lan496/pypi-atomistic-usage/blob/main/CONTRIBUTING.md">Suggest a package.</a></p>
+    <h2 id="downloads-are-not-users">Downloads are not users</h2>
+    <p>CI services, container builds and cluster jobs install packages over and over, so download counts measure installs, not people.
+      Two columns of the Ranking table estimate this over the last <span class="auto-days"></span> days.
+      <b>CI</b> is the share whose installer reported a CI run; pip and uv report one when a variable such as <code>CI</code> is set, as on GitHub Actions and GitLab CI.
+      <b>Bulk rebuilds</b> is the share that came, without a CI flag, from one pinned environment downloading the same version at least <span id="bulk-min"></span> times on one day (same installer, Python, OS, glibc and country): a Docker image or batch job rebuilt many times rather than many users.</p>
+    <p>Automated installs run almost entirely on Linux, so "macOS + Windows" leaves them out; it also leaves out real use on Linux workstations and clusters, and is therefore a floor on interactive use, not an estimate of it.
+      Installs from outside PyPI, such as conda-forge, are not counted.</p>
+    <h2 id="all-of-pypi">Against all of PyPI</h2>
+    <p>PyPI as a whole has grown too, and much of that growth is automated installs.
+      The baseline of all of PyPI (ClickPy's monthly totals over every project, all platforms, mirrors included) shows whether the field grew faster than that:
+      see "Per million PyPI downloads" in The field over time and the dashed line in Rising and fading on <a href="./">the dashboard</a>.
+      The package list is today's, so packages that were popular once and are no longer listed are missing from the early years.</p>
+    <h2 id="using-the-figures">Using the figures</h2>
+    <p>The figures and the numbers behind them are free to reuse, also commercially, in papers, slides and web pages, under
+      <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>: credit "Atomistic PyPI usage" with a link, as in <a href="#cite-as">How to cite</a>.</p>
+    <p>Each chart downloads as PNG or SVG, drawn in light colours with its title, the filters in use and the data source, ready for a slide; CSV gives the numbers behind it.
+      The bar chart race records as a 1280x720 video (MP4 or WebM, depending on the browser) in real time; keep the tab in view while it records.
+      Share gives a link to one figure alone and the code to embed it in another web page, keeping the filters in use.
+      Either follows the monthly refresh ("Latest") or stays on the data of one refresh for good ("Fixed"), for papers and slides whose numbers must not change.
+      The address bar keeps the current view, so a link reproduces it.</p>
+    <h2 id="cite-as">How to cite</h2>
+    <p id="cite"></p>
+  </article>
+  <footer>
+    <span id="footer"></span>
+    <span>Inspired by <a href="https://atomistic.software">atomistic.software</a> (L. Talirz et al.), which tracks citations of atomistic simulation engines.
+      Data from <a href="https://clickpy.clickhouse.com">ClickPy</a> by ClickHouse, Inc., queried as in the <a href="https://github.com/ClickHouse/clickpy">ClickPy source</a> (Apache-2.0); not affiliated with ClickHouse or ClickPy.
+      Icons are the GitHub owner of each repository.
+      Figures and data <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, code MIT.</span>
+  </footer>
+</main>
+<script src="data.js"></script>
+<script>
+const D = window.PYPI_DATA;
+for (const node of document.querySelectorAll(".auto-days")) node.textContent = D.automation_days;
+document.getElementById("bulk-min").textContent = D.bulk_min.toLocaleString("en-US");
+document.getElementById("cite").textContent =
+  `Atomistic PyPI usage, ${new URL("./", location.href).href} (data fetched ${D.fetched} from ClickPy), CC BY 4.0. Source code: https://github.com/lan496/pypi-atomistic-usage.`;
+document.getElementById("footer").textContent = `Data fetched ${D.fetched} from ClickPy and PyPI.`;
+</script>
+</body>
+</html>

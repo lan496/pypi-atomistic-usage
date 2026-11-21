@@ -320,14 +320,17 @@ a.pkg-link:hover text { fill: var(--text-primary); text-decoration: underline; }
 .solo-foot a { color: inherit; }
 
 /* ---- about ---- */
-.about { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 32px; color: var(--text-secondary); }
-.about p { margin: 0 0 10px; }
+.doc { max-width: 760px; margin-inline: auto; padding: 28px 32px 20px; }
+.doc h1 { margin-bottom: 8px; }
+.doc h2 { font-size: 19px; margin: 28px 0 8px; scroll-margin-top: 16px; }
+.doc p { color: var(--text-secondary); font-size: 15px; line-height: 1.65; margin: 0 0 12px; }
+.topbar nav a[aria-current="page"] { color: var(--text-primary); background: var(--wash); }
 footer { color: var(--text-muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 16px; justify-content: space-between; padding: 8px 0 0; }
 footer a { color: inherit; }
 
 @media (max-width: 960px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .split, .split.even, .about, .growth { grid-template-columns: minmax(0, 1fr); }
+  .split, .split.even, .growth { grid-template-columns: minmax(0, 1fr); }
 }
 /* Ranking: drop secondary columns as the page narrows so the table fits without scrolling */
 @media (max-width: 1180px) {
