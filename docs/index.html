@@ -187,7 +187,7 @@ h3 { font-size: 13px; font-weight: 650; margin: 0 0 6px; color: var(--text-prima
 #tooltip .row { display: flex; align-items: center; gap: 6px; white-space: nowrap; color: var(--text-secondary); padding: 0 4px; border-radius: 4px; }
 #tooltip .row b { color: var(--text-primary); min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
 #tooltip .row.hl { color: var(--text-primary); font-weight: 600; background: var(--wash); }
-#tooltip .more { color: var(--text-muted); margin-top: 6px; }
+#tooltip .rank { color: var(--text-muted); min-width: 16px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 400; }
 .key { display: inline-block; width: 10px; height: 3px; border-radius: 2px; flex: none; }
 
 /* ---- bar chart race ---- */
@@ -618,7 +618,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const M = { left: 52, right: 190, top: 16, bottom: 28 };
 const MAX_LABELS = 25;
 const LABEL_GAP = 14;
-const TOOLTIP_ROWS = 20;
+const TOOLTIP_ROWS = 5;
 const RACE_ROWS = 12;
 const RACE_ROW_H = 28;
 const RACE_STEP_MS = 150;
@@ -1053,25 +1053,26 @@ function renderTooltip(cx) {
   const { ax } = view;
   const i = state.cursor;
   const ranked = view.pk.filter((p) => ax.values(p)[i] !== null).sort((a, b) => ax.values(b)[i] - ax.values(a)[i]);
-  const rows = ranked.slice(0, TOOLTIP_ROWS);
+  // only the highlighted package and its neighbours in rank, so the plot stays visible
   const hl = ranked.find((p) => p.name === state.hl);
-  if (hl && !rows.includes(hl)) rows.push(hl);
+  const at = hl ? ranked.indexOf(hl) : 0;
+  const from = Math.max(0, Math.min(at - Math.floor(TOOLTIP_ROWS / 2), ranked.length - TOOLTIP_ROWS));
   const list = el("div", { class: "rows" });
-  list.style.setProperty("--rows", Math.ceil(rows.length / (rows.length > 10 ? 2 : 1)));
-  for (const p of rows) {
+  list.style.setProperty("--rows", TOOLTIP_ROWS);
+  ranked.slice(from, from + TOOLTIP_ROWS).forEach((p, k) => {
     const key = el("i", { class: "key" });
     key.style.background = colorOf(p);
     list.append(el("div", { class: p.name === state.hl ? "row hl" : "row" },
-      key, el("b", {}, full(ax.values(p)[i])), icon(p), p.name));
-  }
+      el("span", { class: "rank" }, String(from + k + 1)), key, el("b", {}, full(ax.values(p)[i])), icon(p), p.name));
+  });
   tooltip.replaceChildren(el("div", { class: "date" }, ax.label(i)), list);
-  if (ranked.length > rows.length) {
-    tooltip.append(el("div", { class: "more" }, `and ${ranked.length - rows.length} smaller ones, listed in the table`));
-  }
   tooltip.style.display = "block";
   const onLeft = cx > M.left + view.pw / 2;
   tooltip.style.left = onLeft ? "" : `${cx + 14}px`;
   tooltip.style.right = onLeft ? `${view.W - cx + 14}px` : "";
+  // vertically away from the highlighted point
+  const hy = hl ? view.y(ax.values(hl)[i]) : M.top;
+  tooltip.style.top = `${hy < M.top + view.ph / 2 ? M.top + view.ph - tooltip.offsetHeight : M.top}px`;
 }
 
 function onPointer(ev) {
