@@ -246,7 +246,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.rank { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; width: 1%; }
 td.pkg { font-weight: 550; }
 td.cat { color: var(--text-secondary); font-size: 12px; }
-td.wrap { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+.ranking th { white-space: normal; }
+td.wrap { max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
 td.wrap .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
 td.muted { color: var(--text-muted); }
 td.bar { width: 10%; min-width: 72px; padding-left: 0; }
@@ -315,6 +316,13 @@ footer a { color: inherit; }
 @media (max-width: 960px) {
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .split, .split.even, .about, .growth { grid-template-columns: minmax(0, 1fr); }
+}
+/* Ranking: drop secondary columns as the page narrows so the table fits without scrolling */
+@media (max-width: 1180px) {
+  .ranking :is(th, td):is(:nth-child(4), :nth-child(5), :nth-child(7)) { display: none; }
+}
+@media (max-width: 860px) {
+  .ranking :is(th, td):is(:nth-child(10), :nth-child(11), :nth-child(12)) { display: none; }
 }
 @media (max-width: 640px) {
   main { padding: 0 14px 24px; }
@@ -523,7 +531,7 @@ footer a { color: inherit; }
       <div class="tools" data-fig="table"></div>
     </div>
     <div class="table-wrap">
-      <table>
+      <table class="ranking">
         <thead>
           <tr>
             <th>#</th>
