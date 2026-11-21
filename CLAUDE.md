@@ -71,5 +71,6 @@ Each package: `name`, `category`, `via` (`null` for listed seeds; shown as
 
 Each refresh also writes a frozen copy to `docs/snapshots/<fetched>.js`, which
 `#snapshot=<fetched>` links load instead of `data.js` ("Fixed" share links).
-Snapshots are never rewritten, so `index.html` must keep reading old ones: add
-fields as optional, never rename or drop one.
+Snapshots are never rewritten and are deleted after `SNAPSHOT_KEEP_DAYS` (a
+year), so `index.html` must keep reading those up to a year old: add fields as
+optional, and rename or drop one only once no snapshot carries the old form.

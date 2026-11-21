@@ -45,7 +45,8 @@ Every figure has a Share button that gives a link to that figure alone
 (`#panel=<name>`, keeping the filters in use; add `&theme=light` for light
 colours) and an `<iframe>` code to embed it in another web page. A "Latest"
 link follows the monthly refresh; a "Fixed" link (`#snapshot=<date>`) keeps the
-data of one refresh for good, from the copies in `docs/snapshots/`. Figures
+data of one refresh for a year, from the copies in `docs/snapshots/`; older
+copies are deleted at each refresh and their links show the latest data. Figures
 also download as PNG, SVG and CSV.
 
 ## License

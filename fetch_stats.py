@@ -310,6 +310,8 @@ CLICKPY = "https://sql-clickhouse.clickhouse.com/?user=demo&read_overflow_mode=t
 OUTPUT = Path(__file__).parent / "docs" / "data.js"
 # a frozen copy of each refresh, named by its fetch date, for links that keep their numbers
 SNAPSHOTS = OUTPUT.parent / "snapshots"
+# snapshots older than this are deleted at each refresh; their links fall back to the latest data
+SNAPSHOT_KEEP_DAYS = 365
 PYPI_INTERVAL_S = 0.3
 ATTEMPTS = 4
 
@@ -394,7 +396,15 @@ def write_data(packages: dict[str, dict]) -> None:
     OUTPUT.write_text(text)
     SNAPSHOTS.mkdir(exist_ok=True)
     (SNAPSHOTS / f"{payload['fetched']}.js").write_text(text)
+    prune_snapshots(date.fromisoformat(payload["fetched"]))
     print(f"wrote {OUTPUT}: {len(rows)} packages, {dates[0]} to {dates[-1]}, {months[0][:7]} on")
+
+
+def prune_snapshots(today: date) -> None:
+    for path in SNAPSHOTS.glob("*.js"):
+        if date.fromisoformat(path.stem) < today - timedelta(days=SNAPSHOT_KEEP_DAYS):
+            path.unlink()
+            print(f"deleted {path}: older than {SNAPSHOT_KEEP_DAYS} days")
 
 
 def fetch_series(keys: list[str], period: str, first: date, last: date) -> dict[str, dict]:

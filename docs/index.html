@@ -253,7 +253,7 @@
     <label>Data</label>
     <div class="seg" id="share-kind">
       <button type="button" data-v="latest" title="Follows the monthly refresh">Latest</button>
-      <button type="button" data-v="fixed" id="share-fixed" title="Keeps the numbers of this refresh for good"></button>
+      <button type="button" data-v="fixed" id="share-fixed" title="Keeps the numbers of this refresh for a year"></button>
     </div>
     <p class="note" id="share-kind-note"></p>
     <label for="share-link">Link to this figure alone</label>
@@ -377,7 +377,7 @@ function init() {
   if (state.snapshot) {
     fresh.append(`Fixed to the refresh of ${D.fetched}, data to ${D.dates[N - 1]}. `, el("a", { class: "latest-link" }, "See the latest"));
   } else {
-    fresh.textContent = `${SNAPSHOT ? `No snapshot of ${SNAPSHOT}; showing the latest. ` : ""}Updated monthly · data to ${D.dates[N - 1]}`;
+    fresh.textContent = `${SNAPSHOT ? `No snapshot of ${SNAPSHOT} (they are kept for a year); showing the latest. ` : ""}Updated monthly · data to ${D.dates[N - 1]}`;
   }
   document.documentElement.classList.toggle("light", state.theme === "light");
   if (state.panel) enterSolo();
@@ -1574,7 +1574,7 @@ function fillShare() {
   const { card, kind } = share;
   for (const b of document.querySelectorAll("#share-kind button")) b.setAttribute("aria-pressed", String(b.dataset.v === kind));
   document.getElementById("share-kind-note").textContent = kind === "fixed"
-    ? `The numbers stay those of the refresh of ${D.fetched}, data to ${D.dates[N - 1]}.`
+    ? `The numbers stay those of the refresh of ${D.fetched}, data to ${D.dates[N - 1]}, for a year; after that the link shows the latest data.`
     : "The figure follows the monthly refresh.";
   const title = card.querySelector("h2").textContent;
   const url = viewUrl({ panel: card.dataset.panel, snapshot: kind === "fixed" ? D.fetched : "" });
