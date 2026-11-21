@@ -404,22 +404,6 @@ footer a { color: inherit; }
   <section class="card">
     <div class="card-head">
       <div>
-        <h2 id="chart-title"></h2>
-        <p class="note" id="chart-note"></p>
-        <p class="note hint">Hover to read values; arrow keys move the date and the selected package. Colours follow the categories above; with one category shown, each package gets its own colour.</p>
-      </div>
-      <div class="tools" data-fig="chart"></div>
-    </div>
-    <div class="chart-wrap">
-      <svg id="chart" height="460" tabindex="0" role="img"
-           aria-label="Downloads per day for each package over time. Left and right arrow keys move the date, up and down arrow keys select a package. The table below carries the same totals."></svg>
-      <div id="tooltip"></div>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="card-head">
-      <div>
         <h2>The field over time</h2>
         <p class="headline" id="era-headline"></p>
         <p class="note" id="era-note"></p>
@@ -521,6 +505,22 @@ footer a { color: inherit; }
       <div id="share"></div>
     </section>
   </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 id="chart-title"></h2>
+        <p class="note" id="chart-note"></p>
+        <p class="note hint">Hover to read values; arrow keys move the date and the selected package. Colours follow the categories above; with one category shown, each package gets its own colour.</p>
+      </div>
+      <div class="tools" data-fig="chart"></div>
+    </div>
+    <div class="chart-wrap">
+      <svg id="chart" height="460" tabindex="0" role="img"
+           aria-label="Downloads per day for each package over time. Left and right arrow keys move the date, up and down arrow keys select a package. The table below carries the same totals."></svg>
+      <div id="tooltip"></div>
+    </div>
+  </section>
 
   <section class="card">
     <div class="card-head">
