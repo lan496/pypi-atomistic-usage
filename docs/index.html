@@ -1074,11 +1074,16 @@ function renderShare() {
   document.getElementById("share-note").textContent = `Share of downloads, ${periodName()}, ${platformName()}. Click to filter.`;
   const bar = el("div", { class: "share-bar", "aria-hidden": "true" });
   const list = el("ul", { class: "cat-list" });
+  const segs = new Map();
+  // the bar segments of the chosen category, or of the one hovered in the list, stand out
+  const lightUp = (c) => {
+    for (const [sc, seg] of segs) seg.style.opacity = c && c !== sc ? 0.25 : 1;
+  };
   for (const b of [...byCat].sort((a, b2) => b2.total - a.total)) {
     const seg = el("div");
     seg.style.flex = String(b.total / total);
     seg.style.background = catColor(b.c);
-    seg.style.opacity = state.cat && state.cat !== b.c ? 0.25 : 1;
+    segs.set(b.c, seg);
     if (b.total > 0) bar.append(seg);
     const dot = el("i", { class: "dot" });
     dot.style.background = catColor(b.c);
@@ -1087,8 +1092,11 @@ function renderShare() {
       el("span", { class: "n" }, `${b.n} pkg`),
       el("span", { class: "v" }, `${(100 * b.total / total).toFixed(1)}%`));
     li.addEventListener("click", () => setCat(b.c));
+    li.addEventListener("pointerenter", () => lightUp(b.c));
+    li.addEventListener("pointerleave", () => lightUp(state.cat));
     list.append(li);
   }
+  lightUp(state.cat);
   document.getElementById("share").replaceChildren(bar, list);
 }
 
@@ -1248,10 +1256,13 @@ function renderGrowth() {
     transform: `rotate(-90 12 ${m.top + ph / 2})`,
   }, "Change from the 12 months before"));
 
+  const dots = new Map();
   for (const d of [...pts].sort((p, q) => q.now - p.now)) {
-    plot.append(svg("circle", {
+    const dot = svg("circle", {
       cx: x(d.now), cy: y(d.r), r: 4.5, fill: colorOf(d.p), stroke: "var(--surface)", "stroke-width": 1, opacity: 0.9,
-    }));
+    });
+    dots.set(d.p, dot);
+    plot.append(dot);
   }
   // names for the biggest, the fastest risers and the steepest fallers, where they fit
   const big = [...pts].sort((p, q) => q.now - p.now).slice(0, 8);
@@ -1292,13 +1303,34 @@ function renderGrowth() {
   };
   plot.onpointerleave = () => { hover.replaceChildren(); hideTip(); };
 
+  // A newcomer from the list, where it would sit, dashed as it is not one of the dots; the others fade.
+  const focus = svg("g", { "pointer-events": "none" });
+  plot.append(focus);
+  const focusOn = (d) => {
+    for (const dot of dots.values()) dot.setAttribute("opacity", d ? 0.2 : 0.9);
+    focus.replaceChildren();
+    if (!d) return;
+    const cx = Math.min(W - m.right, Math.max(m.left, x(d.now)));
+    const cy = y(d.before > 0 ? Math.log2(d.now / d.before) : Infinity);
+    focus.append(
+      svg("circle", { cx, cy, r: 4.5, fill: colorOf(d.p) }),
+      svg("circle", { cx, cy, r: 8, fill: "none", stroke: "var(--text-primary)", "stroke-width": 1.5, "stroke-dasharray": "3 2" }),
+      svg("text", {
+        x: cx > m.left + pw / 2 ? cx - 12 : cx + 12, y: cy + (cy < m.top + 12 ? 16 : 4),
+        "text-anchor": cx > m.left + pw / 2 ? "end" : "start", class: "lbl",
+      }, `${d.p.name}, new: ${compact(d.before)} to ${compact(d.now)} a day`));
+  };
+
   const list = document.getElementById("newcomers");
   list.replaceChildren();
   for (const d of fresh.sort((p, q) => q.now - p.now).slice(0, 12)) {
-    list.append(el("li", { title: d.p.category },
+    const li = el("li", { title: d.p.category },
       icon(d.p), el("span", { class: "name" }, pkgLink(d.p)),
       el("span", { class: "y" }, d.p.since ? d.p.since.slice(0, 4) : ""),
-      el("span", { class: "v" }, `${compact(d.now)}/day`)));
+      el("span", { class: "v" }, `${compact(d.now)}/day`));
+    li.addEventListener("pointerenter", () => focusOn(d));
+    li.addEventListener("pointerleave", () => focusOn(null));
+    list.append(li);
   }
   if (!fresh.length) list.append(el("li", { class: "y" }, "None among the packages shown."));
 }
