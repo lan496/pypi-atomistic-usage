@@ -1220,23 +1220,37 @@ function renderGrowth() {
       d.before > 0 ? (d.now / d.before).toFixed(3) : ""]),
   };
   document.getElementById("growth-note").textContent =
-    `Each dot is a package with at least 10 downloads a day over the last 12 months (${platformName()}). `
+    `Each dot is a package with at least 10 downloads a day over the last 12 months (${platformName()}); `
+    + "rings are newcomers, under 10 a day in the 12 months before. "
     + "Further right means more downloads; higher means more growth against the 12 months before. "
     + "Dots above the dashed line grew faster than PyPI as a whole.";
 
+  // newcomers with no download at all before have no ratio: they go in a row of their own at the top
+  for (const d of fresh) d.r = d.before > 0 ? Math.log2(d.now / d.before) : null;
+  const shown = [...pts, ...fresh];
+  const ratios = shown.filter((d) => d.r !== null).map((d) => d.r);
   const { W, H, m, pw, ph } = frame(plot, { left: 56, right: 16, top: 12, bottom: 44 });
-  const logs = pts.map((d) => Math.log10(d.now));
+  const logs = shown.map((d) => Math.log10(d.now));
   const lo = Math.floor(Math.min(...logs, 1));
   const hi = Math.max(lo + 1, Math.ceil(Math.max(...logs, 2)));
-  const lim = Math.min(4, Math.max(1, Math.ceil(Math.max(...pts.map((d) => Math.abs(d.r)), 0))));
+  // doublings above and below 1x, wide enough for every package
+  const up = Math.max(1, Math.ceil(Math.max(...ratios, 0)));
+  const down = Math.max(1, Math.ceil(Math.max(...ratios.map((r) => -r), 0)));
+  const newRow = shown.some((d) => d.r === null) ? 20 : 0;
+  const top = m.top + newRow;
   const x = (v) => m.left + ((Math.log10(v) - lo) / (hi - lo)) * pw;
-  const y = (r) => m.top + ph / 2 - (Math.max(-lim, Math.min(lim, r)) / lim) * (ph / 2);
-  plot.append(svg("rect", { x: m.left, y: m.top, width: pw, height: ph / 2, fill: "var(--up)", opacity: 0.05 }));
-  plot.append(svg("rect", { x: m.left, y: m.top + ph / 2, width: pw, height: ph / 2, fill: "var(--down)", opacity: 0.05 }));
-  for (let k = -lim; k <= lim; k++) {
+  const y = (r) => top + ((up - r) / (up + down)) * (m.top + ph - top);
+  const yOf = (d) => (d.r === null ? m.top + newRow / 2 : y(d.r));
+  plot.append(svg("rect", { x: m.left, y: top, width: pw, height: y(0) - top, fill: "var(--up)", opacity: 0.05 }));
+  plot.append(svg("rect", { x: m.left, y: y(0), width: pw, height: m.top + ph - y(0), fill: "var(--down)", opacity: 0.05 }));
+  const step = up + down > 12 ? 2 : 1;
+  for (let k = -down; k <= up; k++) {
     plot.append(svg("line", { x1: m.left, x2: W - m.right, y1: y(k), y2: y(k), stroke: k ? "var(--grid)" : "var(--axis)" }));
-    plot.append(svg("text", { x: m.left - 8, y: y(k) + 4, "text-anchor": "end" }, k >= 0 ? `${2 ** k}x` : `1/${2 ** -k}`));
+    if (k % step === 0) {
+      plot.append(svg("text", { x: m.left - 8, y: y(k) + 4, "text-anchor": "end" }, k >= 0 ? `${compact(2 ** k)}x` : `1/${compact(2 ** -k)}`));
+    }
   }
+  if (newRow) plot.append(svg("text", { x: m.left - 8, y: m.top + newRow / 2 + 4, "text-anchor": "end" }, "new"));
   for (let e = lo; e <= hi; e++) {
     plot.append(svg("line", { x1: x(10 ** e), x2: x(10 ** e), y1: m.top, y2: m.top + ph, stroke: "var(--grid)" }));
     plot.append(svg("text", { x: x(10 ** e), y: m.top + ph + 16, "text-anchor": "middle" }, compact(10 ** e)));
@@ -1257,20 +1271,23 @@ function renderGrowth() {
   }, "Change from the 12 months before"));
 
   const dots = new Map();
-  for (const d of [...pts].sort((p, q) => q.now - p.now)) {
-    const dot = svg("circle", {
-      cx: x(d.now), cy: y(d.r), r: 4.5, fill: colorOf(d.p), stroke: "var(--surface)", "stroke-width": 1, opacity: 0.9,
-    });
+  for (const d of [...shown].sort((p, q) => q.now - p.now)) {
+    const isNew = fresh.includes(d);
+    const dot = svg("circle", isNew
+      ? { cx: x(d.now), cy: yOf(d), r: 4, fill: "var(--surface)", stroke: colorOf(d.p), "stroke-width": 1.75, opacity: 0.9 }
+      : { cx: x(d.now), cy: yOf(d), r: 4.5, fill: colorOf(d.p), stroke: "var(--surface)", "stroke-width": 1, opacity: 0.9 });
     dots.set(d.p, dot);
     plot.append(dot);
   }
-  // names for the biggest, the fastest risers and the steepest fallers, where they fit
-  const big = [...pts].sort((p, q) => q.now - p.now).slice(0, 8);
-  const sizeable = pts.filter((d) => d.now >= 100).sort((p, q) => q.r - p.r);
+  // names for the biggest, the fastest risers and the steepest fallers, where they fit;
+  // the row of the new is crowded, and its packages are named in the list beside
+  const named = shown.filter((d) => d.r !== null);
+  const big = [...named].sort((p, q) => q.now - p.now).slice(0, 8);
+  const sizeable = named.filter((d) => d.now >= 100).sort((p, q) => q.r - p.r);
   const boxes = [];
   for (const d of new Set([...big, ...sizeable.slice(0, 5), ...sizeable.slice(-5)])) {
     const w = d.p.name.length * 6.3;
-    const [cx, cy] = [x(d.now), y(d.r)];
+    const [cx, cy] = [x(d.now), yOf(d)];
     for (const lx of [cx + 7, cx - 7 - w]) {
       const b = { x1: lx, x2: lx + w, y1: cy - 7, y2: cy + 5 };
       const inside = b.x1 >= m.left && b.x2 <= W - m.right && b.y1 >= m.top && b.y2 <= m.top + ph;
@@ -1280,6 +1297,8 @@ function renderGrowth() {
       break;
     }
   }
+  const change = (d) => `${compact(d.before)} to ${compact(d.now)} downloads a day`
+    + (d.r === null ? "" : ` (${d.now >= d.before ? `${(d.now / d.before).toFixed(1)}x` : pct(d.now / d.before - 1, true)})`);
   const hover = svg("g");
   plot.append(hover);
   plot.onpointermove = (ev) => {
@@ -1287,38 +1306,36 @@ function renderGrowth() {
     const [px, py] = [ev.clientX - box.left, ev.clientY - box.top];
     let best = null;
     let bestDist = 18;
-    for (const d of pts) {
-      const dist = Math.hypot(x(d.now) - px, y(d.r) - py);
+    for (const d of shown) {
+      const dist = Math.hypot(x(d.now) - px, yOf(d) - py);
       if (dist < bestDist) { best = d; bestDist = dist; }
     }
     hover.replaceChildren();
     plot.onclick = best ? (e) => { if (!e.target.closest("a")) openPkg(best.p); } : null;
     plot.style.cursor = best ? "pointer" : "";
     if (!best) { hideTip(); return; }
-    hover.append(svg("circle", { cx: x(best.now), cy: y(best.r), r: 7, fill: "none", stroke: "var(--text-primary)", "stroke-width": 1.5 }));
+    hover.append(svg("circle", { cx: x(best.now), cy: yOf(best), r: 7, fill: "none", stroke: "var(--text-primary)", "stroke-width": 1.5 }));
     showTip(ev,
       el("div", { class: "t" }, best.p.name),
-      el("div", { class: "m" }, best.p.category),
-      el("div", {}, `${compact(best.before)} to ${compact(best.now)} downloads a day (${pct(best.now / best.before - 1, true)})`));
+      el("div", { class: "m" }, `${best.p.category}${fresh.includes(best) ? "; newcomer" : ""}`),
+      el("div", {}, change(best)));
   };
   plot.onpointerleave = () => { hover.replaceChildren(); hideTip(); };
 
-  // A newcomer from the list, where it would sit, dashed as it is not one of the dots; the others fade.
+  // A newcomer hovered in the list: its ring is marked and named, the other dots fade.
   const focus = svg("g", { "pointer-events": "none" });
   plot.append(focus);
   const focusOn = (d) => {
-    for (const dot of dots.values()) dot.setAttribute("opacity", d ? 0.2 : 0.9);
+    for (const [q, dot] of dots) dot.setAttribute("opacity", d && q !== d.p ? 0.2 : 0.9);
     focus.replaceChildren();
     if (!d) return;
-    const cx = Math.min(W - m.right, Math.max(m.left, x(d.now)));
-    const cy = y(d.before > 0 ? Math.log2(d.now / d.before) : Infinity);
+    const [cx, cy] = [x(d.now), yOf(d)];
     focus.append(
-      svg("circle", { cx, cy, r: 4.5, fill: colorOf(d.p) }),
-      svg("circle", { cx, cy, r: 8, fill: "none", stroke: "var(--text-primary)", "stroke-width": 1.5, "stroke-dasharray": "3 2" }),
+      svg("circle", { cx, cy, r: 8, fill: "none", stroke: "var(--text-primary)", "stroke-width": 1.5 }),
       svg("text", {
         x: cx > m.left + pw / 2 ? cx - 12 : cx + 12, y: cy + (cy < m.top + 12 ? 16 : 4),
         "text-anchor": cx > m.left + pw / 2 ? "end" : "start", class: "lbl",
-      }, `${d.p.name}, new: ${compact(d.before)} to ${compact(d.now)} a day`));
+      }, d.p.name));
   };
 
   const list = document.getElementById("newcomers");
@@ -1330,12 +1347,10 @@ function renderGrowth() {
       el("span", { class: "v" }, `${compact(d.now)}/day`));
     li.addEventListener("pointerenter", (ev) => {
       focusOn(d);
-      const top = d.before <= 0 || Math.log2(d.now / d.before) > lim;
       showTip(ev,
         el("div", { class: "t" }, d.p.name),
         el("div", { class: "m" }, `${d.p.category}; first release ${d.p.since ?? "unknown"}`),
-        el("div", {}, `${compact(d.before)} to ${compact(d.now)} downloads a day`),
-        el("div", { class: "m" }, top ? "Ringed at the top edge of the plot, beyond its scale." : "Ringed in the plot."));
+        el("div", {}, change(d)));
     });
     li.addEventListener("pointerleave", () => { focusOn(null); hideTip(); });
     list.append(li);
