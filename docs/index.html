@@ -1328,8 +1328,16 @@ function renderGrowth() {
       icon(d.p), el("span", { class: "name" }, pkgLink(d.p)),
       el("span", { class: "y" }, d.p.since ? d.p.since.slice(0, 4) : ""),
       el("span", { class: "v" }, `${compact(d.now)}/day`));
-    li.addEventListener("pointerenter", () => focusOn(d));
-    li.addEventListener("pointerleave", () => focusOn(null));
+    li.addEventListener("pointerenter", (ev) => {
+      focusOn(d);
+      const top = d.before <= 0 || Math.log2(d.now / d.before) > lim;
+      showTip(ev,
+        el("div", { class: "t" }, d.p.name),
+        el("div", { class: "m" }, `${d.p.category}; first release ${d.p.since ?? "unknown"}`),
+        el("div", {}, `${compact(d.before)} to ${compact(d.now)} downloads a day`),
+        el("div", { class: "m" }, top ? "Ringed at the top edge of the plot, beyond its scale." : "Ringed in the plot."));
+    });
+    li.addEventListener("pointerleave", () => { focusOn(null); hideTip(); });
     list.append(li);
   }
   if (!fresh.length) list.append(el("li", { class: "y" }, "None among the packages shown."));
@@ -1394,24 +1402,36 @@ function renderAdopt() {
       x1: W - m.right + 6, x2: W - m.right + 20, y1: l.y, y2: l.y,
       stroke: l.s.color, "stroke-width": 2.5, "stroke-dasharray": l.s.dash === "none" ? "none" : "4 2",
     }));
-    plot.append(svgLink(l.s.p, svg("text", { x: W - m.right + 24, y: l.y + 4, class: "lbl" }, l.s.p.name)));
+    l.text = svg("text", { x: W - m.right + 24, y: l.y + 4, class: "lbl" }, l.s.p.name);
+    plot.append(svgLink(l.s.p, l.text));
   }
   const hover = svg("g");
   plot.append(hover);
   plot.onpointermove = (ev) => {
     const box = plot.getBoundingClientRect();
     const [px, py] = [ev.clientX - box.left, ev.clientY - box.top];
-    const age = Math.round(((px - m.left) / pw) * maxAge);
     let best = null;
-    let bestDist = Infinity;
-    series.forEach((s, k) => {
-      const pt = s.pts.find((d) => d.age === age);
-      if (pt && Math.abs(y(pt.v) - py) < bestDist) { best = { k, pt }; bestDist = Math.abs(y(pt.v) - py); }
-    });
+    if (px > W - m.right) {
+      // over the names: the nearest name picks its line, shown at its last month
+      const l = labels.reduce((a, b) => (Math.abs(b.y - py) < Math.abs(a.y - py) ? b : a), labels[0]);
+      if (l) best = { k: series.indexOf(l.s), pt: l.s.pts.at(-1) };
+    } else {
+      const age = Math.round(((px - m.left) / pw) * maxAge);
+      let bestDist = Infinity;
+      series.forEach((s, k) => {
+        const pt = s.pts.find((d) => d.age === age);
+        if (pt && Math.abs(y(pt.v) - py) < bestDist) { best = { k, pt }; bestDist = Math.abs(y(pt.v) - py); }
+      });
+    }
     paths.forEach((path, k) => {
       path.setAttribute("opacity", best && best.k !== k ? 0.15 : 1);
       path.setAttribute("stroke-width", best && best.k === k ? 3 : 1.75);
     });
+    for (const l of labels) {
+      const on = best && series[best.k] === l.s;
+      l.text.setAttribute("font-weight", on ? 600 : 400);
+      l.text.setAttribute("opacity", best && !on ? 0.4 : 1);
+    }
     hover.replaceChildren();
     const s = best && series[best.k];
     plot.onclick = s ? (e) => { if (!e.target.closest("a")) openPkg(s.p); } : null;
@@ -1425,6 +1445,7 @@ function renderAdopt() {
   };
   plot.onpointerleave = () => {
     paths.forEach((path) => { path.setAttribute("opacity", 1); path.setAttribute("stroke-width", 1.75); });
+    for (const l of labels) { l.text.setAttribute("font-weight", 400); l.text.setAttribute("opacity", 1); }
     hover.replaceChildren();
     hideTip();
   };
