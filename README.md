@@ -49,6 +49,19 @@ data of one refresh for a year, from the copies in `docs/snapshots/`; older
 copies are deleted at each refresh and their links show the latest data. Figures
 also download as PNG, SVG and CSV.
 
+For example, "The field over time" alone, as a PNG of the 2026-11-20 data that
+links to the live figure:
+
+[![The field over time: PyPI downloads per day of each category of atomistic Python packages since 2016](docs/field-over-time.png)](https://lan496.github.io/pypi-atomistic-usage/#panel=era)
+
+and embedded in a web page (GitHub does not render iframes, hence the image
+above):
+
+```html
+<iframe src="https://lan496.github.io/pypi-atomistic-usage/#panel=era&theme=light"
+        title="The field over time" width="100%" height="520" style="border: 0" loading="lazy"></iframe>
+```
+
 ## License
 
 The figures and the compiled data (`docs/data.js` and what the dashboard
